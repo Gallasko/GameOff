@@ -69,11 +69,25 @@ void initGame()
     Character p1{"Player 1", CharacterType::Player, 100};
 
     p1.speed = 120;
+    p1.spells.push_back(Spell{"Fireball", 20});
+
+    Character p2{"Player 2", CharacterType::Player, 100};
+    p2.speed = 145;
+    p2.spells.push_back(Spell{"Heal", 20});
+    p2.spells.push_back(Spell{"Taunt", 20});
+
+    Character p3{"Player 3", CharacterType::Player, 100};
+    p3.speed = 105;
+    p3.spells.push_back(Spell{"Stab", 20});
+
+    Character p4{"Player 4", CharacterType::Player, 100};
+    p4.speed = 100;
+    p4.spells.push_back(Spell{"Scan", 20});
 
     fightSys->characters.push_back(p1);
-    fightSys->characters.push_back(Character{"Player 2", CharacterType::Player, 100});
-    fightSys->characters.push_back(Character{"Player 3", CharacterType::Player, 100});
-    fightSys->characters.push_back(Character{"Player 4", CharacterType::Player, 100});
+    fightSys->characters.push_back(p2);
+    fightSys->characters.push_back(p3);
+    fightSys->characters.push_back(p4);
 
     fightSys->characters.push_back(Character{"Enemy 1", CharacterType::Enemy, 100});
     fightSys->characters.push_back(Character{"Boss 1",  CharacterType::Enemy, 100});

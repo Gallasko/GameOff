@@ -36,6 +36,33 @@ namespace pg
 
         Element elementType = Element::ElementLess;
         DamageType damageType = DamageType::Physical;
+
+        bool selfOnly = false;
+
+        size_t nbTargets = 1;
+    };
+
+    enum class TriggerType : uint8_t
+    {
+        TurnStart = 0,
+        TurnEnd,
+        AnyTurnStart,
+        AnyTurnEnd,
+        OnHit,
+        OnDamageDealt,
+        StatBoost
+    };
+
+    struct Passiv
+    {
+        TriggerType trigger;
+        
+        // -1 means permanent, once it reach 0, the passiv is removed
+        size_t remainingTurns = -1;
+
+        // 0 means that it is active everytime the trigger is triggered, any other value means that it need multiple triggers before activation
+        size_t numberOfTriggerBeforeActivation = 0;
+        size_t currentNbOfTriggerSinceLastActivation = 0;
     };
 
     enum class CharacterType : uint8_t
@@ -81,16 +108,26 @@ namespace pg
         Spell *spell;
     };
 
+    struct SelectedSpell
+    {
+        Spell spell;  
+    };
+
     struct FightSystemUpdate {};
 
     struct FightSceneUpdate {};
+
+    struct PlayerNextTurn
+    {
+        Character* chara;
+    };
 
     struct FightSystem : public System<Listener<FightSceneUpdate>, Listener<EnemyHit>, StoragePolicy>
     {
         virtual void onEvent(const EnemyHit& event) override;
         virtual void onEvent(const FightSceneUpdate& event) override;
 
-        void calculateNextPlayingCharacter();
+        Character* calculateNextPlayingCharacter();
 
         Character* findNextPlayingCharacter();
 
@@ -100,6 +137,8 @@ namespace pg
     struct FightScene : public Scene
     {
         virtual void init() override;
+
+        virtual void startUp() override;
 
         FightSystem *fightSys;
 

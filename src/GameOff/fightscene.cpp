@@ -44,10 +44,15 @@ namespace pg
 
     void FightSystem::onEvent(const FightSceneUpdate&)
     {
-        calculateNextPlayingCharacter();
+        auto chara = calculateNextPlayingCharacter();
+
+        if (chara->type == CharacterType::Player)
+        {
+            ecsRef->sendEvent(PlayerNextTurn{chara});
+        }
     }
 
-    void FightSystem::calculateNextPlayingCharacter()
+    Character* FightSystem::calculateNextPlayingCharacter()
     {
         Character *nextPlayingCharacter = findNextPlayingCharacter();
 
@@ -55,12 +60,10 @@ namespace pg
         {
             nextPlayingCharacter->speedUnits -= SPEEDUNITTHRESHOLD + 1;
             LOG_INFO("Fight System", "Next playing character: " << nextPlayingCharacter->name);
-            return;
+            return nextPlayingCharacter;
         }
 
-        bool running = true;
-
-        while (running)
+        while (true)
         {
             for (auto& chara : characters)
             {
@@ -73,7 +76,7 @@ namespace pg
             {
                 nextPlayingCharacter->speedUnits -= SPEEDUNITTHRESHOLD + 1;
                 LOG_INFO("Fight System", "Next playing character: " << nextPlayingCharacter->name);
-                return;
+                return nextPlayingCharacter;
             }
         }
     }
@@ -113,9 +116,12 @@ namespace pg
         auto& enemyNames = uiElements["Enemy Names"];
         auto& enemyHealths = uiElements["Enemy Health"];
 
+        auto& playerNames = uiElements["Player Names"];
+        auto& playerHealths = uiElements["Player Health"];
+
         float xPlayerName = 80; 
 
-        size_t j = 0;
+        size_t j = 0, k = 0;
 
         for (size_t i = 0; i < fightSys->characters.size(); ++i)
         {
@@ -139,12 +145,24 @@ namespace pg
             }
             else if (character.type == CharacterType::Player)
             {
-                makeTTFText(this, xPlayerName, 120, "res/font/Inter/static/Inter_28pt-Light.ttf", character.name, 0.4);
+                auto playerText = makeTTFText(this, xPlayerName, 120, "res/font/Inter/static/Inter_28pt-Light.ttf", character.name, 0.4);
+
+                playerNames.push_back(playerText.entity);
+
+                auto playerHealth = makeTTFText(this, xPlayerName, 170, "res/font/Inter/static/Inter_28pt-Light.ttf", std::to_string(static_cast<int>(character.health)), 0.4);
+
+                playerHealths.push_back(playerHealth.entity);
 
                 xPlayerName += 100;
+
+                ++k;
             }
             
         }
+
+        auto listView = makeListView(ecsRef, 100, 250, 300, 300);
+
+        spellView = listView.get<ListView>();
 
         listenToEvent<OnMouseClick>([this](const OnMouseClick& event) {
             if (event.button == SDL_BUTTON_RIGHT)
@@ -155,8 +173,9 @@ namespace pg
 
         listenToEvent<FightSystemUpdate>([this](const FightSystemUpdate&) {
             auto& enemyHealths = uiElements["Enemy Health"];
+            auto& playerHealths = uiElements["Player Health"];
 
-            size_t j = 0;
+            size_t j = 0, k = 0;
 
             for (size_t i = 0; i < fightSys->characters.size(); ++i)
             {
@@ -170,13 +189,41 @@ namespace pg
 
                     ++j;
                 }
+                else if (chara.type == CharacterType::Player)
+                {
+                    playerHealths[k].get<TTFText>()->setText(std::to_string(static_cast<int>(chara.health)));
+
+                    LOG_INFO("Fight Scene", "Health: " << playerHealths[k].get<TTFText>()->text);
+
+                    ++k;
+                }
             }
         });
 
-        auto listView = makeListView(ecsRef, 100, 250, 300, 300);
+        listenToEvent<PlayerNextTurn>([this](const PlayerNextTurn& event) {
+            LOG_INFO("Fight Scene", "Current player turn: " << event.chara->name);
 
-        spellView = listView.get<ListView>();
+            spellView->clear();
 
+            for (auto& spell : event.chara->spells)
+            {
+                LOG_INFO("Fight Scene", "Spell: " << spell.name);
+                auto sp = makeTTFText(this, 0, 0, "res/font/Inter/static/Inter_28pt-Light.ttf", spell.name, 0.4);
+
+                attach<MouseLeftClickComponent>(sp.entity, makeCallable<SelectedSpell>(spell));
+
+                auto ui = sp.get<UiComponent>();
+
+                ui->setVisibility(false);
+
+                spellView->addEntity(ui);
+            }
+
+        });
+    }
+
+    void FightScene::startUp()
+    {
         ecsRef->sendEvent(FightSceneUpdate{});
     }
 }
