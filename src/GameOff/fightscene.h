@@ -6,40 +6,63 @@
 
 namespace pg
 {
+    // ElementLess (Neutral) = 0, Water, Earth, Air, Fire, Light, Dark
+    inline constexpr size_t NbElements = 7;
+
     struct Spell
     {
         float baseDmg;
     };
 
-    struct Enemy
+    struct Character
     {
-        std::string name;
+        std::string name = "Unknown";
 
-        float health;
+        float health = 100;
 
-        std::vector<Spell> spells;
+        float physicalAttack = 10;
+        float magicalAttack = 10;
+
+        float physicalDefense = 1;
+        float magicalDefense = 1;
+
+        float speed = 10;
+
+        // In percentage
+        float critChance = 5;
+        float critDamage = 150;
+        float evasionRate = 1;
+
+        float elementalRes[NbElements] = {0.0f};
+
+        std::vector<Spell> spells = {};
     };
 
-    struct Player
+    struct EnemyHit
     {
-        std::string name;
+        EnemyHit(size_t id, float damage) : id(id), damage(damage) {}
 
-        float health;
-
-        std::vector<Spell> spells;
+        size_t id;
+        
+        float damage;
     };
 
-    struct FightSystem : public System<StoragePolicy>
+    struct FightSystemUpdate {};
+
+    struct FightSystem : public System<Listener<EnemyHit>, StoragePolicy>
     {
-        std::vector<Enemy> enemies;
-        std::vector<Player> players;
+        virtual void onEvent(const EnemyHit& event) override;
+
+        std::vector<Character> enemies;
+        std::vector<Character> players;
     };
 
     struct FightScene : public Scene
     {
         virtual void init() override;
 
-
         FightSystem *fightSys;
+
+        std::unordered_map<std::string, std::vector<EntityRef>> uiElements;
     };
 }

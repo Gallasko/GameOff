@@ -66,7 +66,15 @@ void initGame()
 
     auto fightSys = mainWindow->ecs.createSystem<FightSystem>();
 
-    fightSys->enemies.push_back(Enemy{"Boss 1", 100});
+    fightSys->enemies.push_back(Character{"Enemy 1", 100});
+    fightSys->enemies.push_back(Character{"Boss 1", 100});
+    fightSys->enemies.push_back(Character{"Enemy 2", 100});
+
+    fightSys->players.push_back(Character{"Player 1", 100});
+    fightSys->players.push_back(Character{"Player 2", 100});
+    fightSys->players.push_back(Character{"Player 3", 100});
+    fightSys->players.push_back(Character{"Player 4", 100});
+
 
     // mainWindow->ecs.succeed<InspectorSystem, ListViewSystem>();
     mainWindow->ecs.succeed<MasterRenderer, TTFTextSystem>();
