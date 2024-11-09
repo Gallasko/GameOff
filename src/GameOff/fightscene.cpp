@@ -111,6 +111,10 @@ namespace pg
     {
         fightSys = ecsRef->getSystem<FightSystem>();
 
+        auto currentSelectedSpellTextUit = makeTTFText(this, 450, 550, "res/font/Inter/static/Inter_28pt-Light.ttf", "No selection", 0.4);
+
+        currentSelectedSpellTextUi = currentSelectedSpellTextUit.entity;
+
         float xEnemyName = 80;
 
         auto& enemyNames = uiElements["Enemy Names"];
@@ -219,6 +223,12 @@ namespace pg
                 spellView->addEntity(ui);
             }
 
+        });
+
+        listenToEvent<SelectedSpell>([this](const SelectedSpell& event) {
+            currentCastedSpell = event.spell;
+
+            currentSelectedSpellTextUi.get<TTFText>()->setText(event.spell.name);
         });
     }
 

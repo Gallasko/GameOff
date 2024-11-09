@@ -110,6 +110,8 @@ namespace pg
 
     struct SelectedSpell
     {
+        SelectedSpell(const Spell& spell) : spell(spell) {}
+
         Spell spell;  
     };
 
@@ -147,5 +149,7 @@ namespace pg
         Spell currentCastedSpell;
 
         CompRef<ListView> spellView;
+
+        EntityRef currentSelectedSpellTextUi;
     };
 }
