@@ -84,14 +84,14 @@ void initGame()
     p4.speed = 100;
     p4.spells.push_back(Spell{"Scan", 20});
 
-    fightSys->characters.push_back(p1);
-    fightSys->characters.push_back(p2);
-    fightSys->characters.push_back(p3);
-    fightSys->characters.push_back(p4);
+    fightSys->addCharacter(p1);
+    fightSys->addCharacter(p2);
+    fightSys->addCharacter(p3);
+    fightSys->addCharacter(p4);
 
-    fightSys->characters.push_back(Character{"Enemy 1", CharacterType::Enemy, 100});
-    fightSys->characters.push_back(Character{"Boss 1",  CharacterType::Enemy, 100});
-    fightSys->characters.push_back(Character{"Enemy 2", CharacterType::Enemy, 100});
+    fightSys->addCharacter(Character{"Enemy 1", CharacterType::Enemy, 100});
+    fightSys->addCharacter(Character{"Boss 1",  CharacterType::Enemy, 100});
+    fightSys->addCharacter(Character{"Enemy 2", CharacterType::Enemy, 100});
 
     // mainWindow->ecs.succeed<InspectorSystem, ListViewSystem>();
     mainWindow->ecs.succeed<MasterRenderer, TTFTextSystem>();

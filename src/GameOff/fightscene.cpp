@@ -27,17 +27,25 @@ namespace pg
         constexpr float SPEEDUNITTHRESHOLD = 999;
     }
 
-    void FightSystem::onEvent(const EnemyHit& event)
+    void FightSystem::onEvent(const SpellCasted& event)
     {
-        if (characters.size() <= event.id)
+        LOG_INFO("Fight System", "Spell " << event.spell->name << " casted on: ");
+
+        for (auto id : event.ids)
         {
-            LOG_ERROR("Fight System", "Wrong id received");
-            return;
+            LOG_INFO("Fight System", "-> " << characters[id].name);
         }
 
-        characters[event.id].health -= event.spell->baseDmg;
+        // Todo this is the heart of the fighting system
+        // if (characters.size() <= event.id)
+        // {
+        //     LOG_ERROR("Fight System", "Wrong id received");
+        //     return;
+        // }
 
-        LOG_INFO("Fight System", "Remaining hp [" << event.id << "] is: " << characters[event.id].health);
+        // characters[event.id].health -= event.spell->baseDmg;
+
+        // LOG_INFO("Fight System", "Remaining hp [" << event.id << "] is: " << characters[event.id].health);
 
         ecsRef->sendEvent(FightSystemUpdate{});
     }
@@ -50,6 +58,13 @@ namespace pg
         {
             ecsRef->sendEvent(PlayerNextTurn{chara});
         }
+    }
+
+    void FightSystem::addCharacter(Character character)
+    {
+        character.id = characters.size();
+
+        characters.push_back(character);
     }
 
     Character* FightSystem::calculateNextPlayingCharacter()
@@ -115,6 +130,12 @@ namespace pg
 
         currentSelectedSpellTextUi = currentSelectedSpellTextUit.entity;
 
+        auto doneUit = makeTTFText(this, 600, 150, "res/font/Inter/static/Inter_28pt-Light.ttf", "Done", 0.6, {255.0f, 0.0f, 0.0f, 255.0f});
+
+        doneUit.get<UiComponent>()->setVisibility(false);
+
+        doneUi = doneUit.entity;
+
         float xEnemyName = 80;
 
         auto& enemyNames = uiElements["Enemy Names"];
@@ -135,7 +156,7 @@ namespace pg
             {
                 auto enemyText = makeTTFText(this, xEnemyName, 20, "res/font/Inter/static/Inter_28pt-Light.ttf", character.name, 0.4);
 
-                attach<MouseLeftClickComponent>(enemyText.entity, makeCallable<EnemyHit>(i, &currentCastedSpell));
+                attach<MouseLeftClickComponent>(enemyText.entity, makeCallable<CharacterLeftClicked>(character.id));
 
                 enemyNames.push_back(enemyText.entity);
 
@@ -150,6 +171,8 @@ namespace pg
             else if (character.type == CharacterType::Player)
             {
                 auto playerText = makeTTFText(this, xPlayerName, 120, "res/font/Inter/static/Inter_28pt-Light.ttf", character.name, 0.4);
+
+                attach<MouseLeftClickComponent>(playerText.entity, makeCallable<CharacterLeftClicked>(character.id));
 
                 playerNames.push_back(playerText.entity);
 
@@ -207,6 +230,15 @@ namespace pg
         listenToEvent<PlayerNextTurn>([this](const PlayerNextTurn& event) {
             LOG_INFO("Fight Scene", "Current player turn: " << event.chara->name);
 
+            if (event.chara->type != CharacterType::Player)
+            {
+                inPlayableTurn = true;
+            }
+   
+            inPlayableTurn = true;
+
+            currentPlayerTurn = event.chara->id;
+
             spellView->clear();
 
             for (auto& spell : event.chara->spells)
@@ -222,13 +254,48 @@ namespace pg
 
                 spellView->addEntity(ui);
             }
-
         });
 
         listenToEvent<SelectedSpell>([this](const SelectedSpell& event) {
             currentCastedSpell = event.spell;
 
             currentSelectedSpellTextUi.get<TTFText>()->setText(event.spell.name);
+
+            selectedTarget.clear();
+
+            inTargetSelection = true;
+        });
+
+        listenToEvent<CharacterLeftClicked>([this](const CharacterLeftClicked& event) {
+            if (not inPlayableTurn)
+                return;
+
+            if (inTargetSelection)
+            {
+                if (currentCastedSpell.selfOnly and event.id != currentPlayerTurn)
+                {
+                    LOG_INFO("Fight Scene", "Cannot target someone else with a self only spell");
+                    return;
+                }
+
+                if (not currentCastedSpell.canTargetSameCharacterMultipleTimes)
+                {
+                    const auto& it = std::find(selectedTarget.begin(), selectedTarget.end(), event.id);
+
+                    if (it != selectedTarget.end())
+                    {
+                        LOG_INFO("Fight Scene", "Cannot target someone multiple times with this spell");
+                        return;
+                    }
+                }
+
+                selectedTarget.push_back(event.id);
+
+                if (selectedTarget.size() >= currentCastedSpell.nbTargets)
+                {
+                    ecsRef->sendEvent(SpellCasted{selectedTarget, &currentCastedSpell});
+                }
+            }
         });
     }
 

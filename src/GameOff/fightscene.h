@@ -40,6 +40,8 @@ namespace pg
         bool selfOnly = false;
 
         size_t nbTargets = 1;
+
+        bool canTargetSameCharacterMultipleTimes = false;
     };
 
     enum class TriggerType : uint8_t
@@ -97,13 +99,15 @@ namespace pg
         float speedUnits = 0;
 
         std::vector<Spell> spells = {};
+
+        size_t id = 0;
     };
 
-    struct EnemyHit
+    struct SpellCasted
     {
-        EnemyHit(size_t id, Spell *spell) : id(id), spell(spell) {}
+        SpellCasted(std::vector<size_t> ids, Spell *spell) : ids(ids), spell(spell) {}
 
-        size_t id;
+        std::vector<size_t> ids;
         
         Spell *spell;
     };
@@ -124,16 +128,25 @@ namespace pg
         Character* chara;
     };
 
-    struct FightSystem : public System<Listener<FightSceneUpdate>, Listener<EnemyHit>, StoragePolicy>
+    struct FightSystem : public System<Listener<FightSceneUpdate>, Listener<SpellCasted>, StoragePolicy>
     {
-        virtual void onEvent(const EnemyHit& event) override;
+        virtual void onEvent(const SpellCasted& event) override;
         virtual void onEvent(const FightSceneUpdate& event) override;
+
+        void addCharacter(Character character);
 
         Character* calculateNextPlayingCharacter();
 
         Character* findNextPlayingCharacter();
 
         std::vector<Character> characters;
+    };
+
+    struct CharacterLeftClicked
+    {
+        CharacterLeftClicked(size_t id) : id(id) {}
+
+        size_t id;
     };
 
     struct FightScene : public Scene
@@ -151,5 +164,15 @@ namespace pg
         CompRef<ListView> spellView;
 
         EntityRef currentSelectedSpellTextUi;
+
+        EntityRef doneUi;
+
+        size_t currentPlayerTurn = 0;
+
+        bool inPlayableTurn = false;
+
+        bool inTargetSelection = false;
+
+        std::vector<size_t> selectedTarget;
     };
 }
