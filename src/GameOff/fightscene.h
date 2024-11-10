@@ -105,11 +105,14 @@ namespace pg
 
     struct SpellCasted
     {
-        SpellCasted(std::vector<size_t> ids, Spell *spell) : ids(ids), spell(spell) {}
+        SpellCasted() {}
+        SpellCasted(size_t caster, std::vector<size_t> ids, Spell *spell) : caster(caster), ids(ids), spell(spell) {}
 
-        std::vector<size_t> ids;
+        size_t caster = 0;
+
+        std::vector<size_t> ids = {0};
         
-        Spell *spell;
+        Spell *spell = nullptr;
     };
 
     struct SelectedSpell
@@ -133,10 +136,36 @@ namespace pg
         Character* chara;
     };
 
-    struct FightSystem : public System<Listener<FightSceneUpdate>, Listener<SpellCasted>, StoragePolicy>
+    enum class FightAnimationEffects : uint8_t
     {
-        virtual void onEvent(const SpellCasted& event) override;
+        Hit = 0,
+        Heal,
+        StatusAilement,
+        Counter,
+        Dodge,
+    };
+
+    struct PlayFightAnimation
+    {
+        PlayFightAnimation(size_t id, const FightAnimationEffects& effect) : id(id), effect(effect) {}
+
+        size_t id;
+
+        FightAnimationEffects effect;
+    };
+
+    struct PlayFightAnimationDone {};
+
+    struct FightSystem : public System<Listener<FightSceneUpdate>, Listener<SpellCasted>, Listener<PlayFightAnimationDone>, Listener<EnemyNextTurn>>
+    {
+        virtual void onEvent(const EnemyNextTurn& event) override;
+        virtual void onEvent(const PlayFightAnimationDone& event) override;
         virtual void onEvent(const FightSceneUpdate& event) override;
+        virtual void onEvent(const SpellCasted& event) override;
+
+        virtual void execute() override;
+
+        void resolveSpell(size_t casterId, size_t receiverId, Spell* spell);
 
         void addCharacter(Character character);
 
@@ -145,6 +174,9 @@ namespace pg
         Character* findNextPlayingCharacter();
 
         std::vector<Character> characters;
+
+        bool spellToBeResolved = false;
+        SpellCasted spellToResolve; 
     };
 
     struct CharacterLeftClicked
@@ -159,6 +191,8 @@ namespace pg
         virtual void init() override;
 
         virtual void startUp() override;
+
+        virtual void execute() override;
 
         void writeInLog(const std::string& message);
 
@@ -183,5 +217,7 @@ namespace pg
         bool inTargetSelection = false;
 
         std::vector<size_t> selectedTarget;
+
+        std::vector<PlayFightAnimation> animationToDo;
     };
 }

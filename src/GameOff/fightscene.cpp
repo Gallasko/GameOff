@@ -27,27 +27,23 @@ namespace pg
         constexpr float SPEEDUNITTHRESHOLD = 999;
     }
 
-    void FightSystem::onEvent(const SpellCasted& event)
+    void FightSystem::onEvent(const EnemyNextTurn& event)
     {
-        LOG_INFO("Fight System", "Spell " << event.spell->name << " casted on: ");
+        
+    }
 
-        for (auto id : event.ids)
+    void FightSystem::onEvent(const PlayFightAnimationDone&)
+    {
+        auto chara = calculateNextPlayingCharacter();
+
+        if (chara->type == CharacterType::Player)
         {
-            LOG_INFO("Fight System", "-> " << characters[id].name);
+            ecsRef->sendEvent(PlayerNextTurn{chara});
         }
-
-        // Todo this is the heart of the fighting system
-        // if (characters.size() <= event.id)
-        // {
-        //     LOG_ERROR("Fight System", "Wrong id received");
-        //     return;
-        // }
-
-        // characters[event.id].health -= event.spell->baseDmg;
-
-        // LOG_INFO("Fight System", "Remaining hp [" << event.id << "] is: " << characters[event.id].health);
-
-        ecsRef->sendEvent(FightSystemUpdate{});
+        else if (chara->type == CharacterType::Enemy)
+        {
+            ecsRef->sendEvent(EnemyNextTurn{chara});
+        }
     }
 
     void FightSystem::onEvent(const FightSceneUpdate&)
@@ -62,6 +58,43 @@ namespace pg
         {
             ecsRef->sendEvent(EnemyNextTurn{chara});
         }
+    }
+
+    void FightSystem::onEvent(const SpellCasted& event)
+    {
+        spellToResolve = event;
+
+        spellToBeResolved = true;
+    }
+
+    void FightSystem::execute()
+    {
+        if (not spellToBeResolved)
+            return;
+
+        LOG_INFO("Fight System", "Spell " << spellToResolve.spell->name << " casted on: ");
+
+        for (auto id : spellToResolve.ids)
+        {
+            LOG_INFO("Fight System", "-> " << characters[id].name);
+            resolveSpell(spellToResolve.caster, id, spellToResolve.spell);
+        }
+
+        spellToBeResolved = false;
+
+        ecsRef->sendEvent(FightSystemUpdate{});
+    }
+
+    void FightSystem::resolveSpell(size_t casterId, size_t receiverId, Spell* spell)
+    {
+        auto& caster = characters[casterId];
+        auto& receiver = characters[receiverId];
+
+        // Todo this is the heart of the fighting system
+
+        receiver.health -= spell->baseDmg;
+
+        ecsRef->sendEvent(PlayFightAnimation{receiverId, FightAnimationEffects::Hit});
     }
 
     void FightSystem::addCharacter(Character character)
@@ -316,15 +349,34 @@ namespace pg
                 if (selectedTarget.size() >= currentCastedSpell.nbTargets)
                 {
                     inPlayableTurn = false;
-                    ecsRef->sendEvent(SpellCasted{selectedTarget, &currentCastedSpell});
+                    ecsRef->sendEvent(SpellCasted{currentPlayerTurn, selectedTarget, &currentCastedSpell});
                 }
             }
+        });
+
+        listenToEvent<PlayFightAnimation>([this](const PlayFightAnimation& event) {
+            animationToDo.push_back(event);
         });
     }
 
     void FightScene::startUp()
     {
         ecsRef->sendEvent(FightSceneUpdate{});
+    }
+
+    void FightScene::execute()
+    {
+        if (animationToDo.size() == 0)
+            return;
+
+        for (auto anim : animationToDo)
+        {
+            //Run animation
+        }
+
+        animationToDo.clear();
+
+        ecsRef->sendEvent(PlayFightAnimationDone{});
     }
 
     void FightScene::writeInLog(const std::string& message)

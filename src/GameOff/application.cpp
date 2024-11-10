@@ -74,7 +74,7 @@ void initGame()
     Character p2{"Player 2", CharacterType::Player, 100};
     p2.speed = 145;
 
-    Spell heal{"Self Heal", 20};
+    Spell heal{"Self Heal", -20};
     heal.selfOnly = true;
 
     p2.spells.push_back(heal);
@@ -86,7 +86,12 @@ void initGame()
 
     Character p4{"Player 4", CharacterType::Player, 100};
     p4.speed = 100;
+    
+    Spell multishot{"Multishot", 10};
+    multishot.nbTargets = 3;
+
     p4.spells.push_back(Spell{"Scan", 20});
+    p4.spells.push_back(multishot);
 
     fightSys->addCharacter(p1);
     fightSys->addCharacter(p2);
