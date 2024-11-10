@@ -90,6 +90,22 @@ namespace pg
 
         calculateListSize(view);
 
+        if (view->stickToBottom)
+        {
+            auto cursorUi = view->cursor->get<UiComponent>();
+
+            float maxHeight = viewUi->height - cursorUi->height;
+
+            float currentPos = maxHeight;
+
+            cursorUi->setTopMargin(currentPos);
+
+            if (view->entities.size() > 0)
+            {
+                view->entities[0]->setTopMargin(-currentPos * static_cast<float>(view->listReelHeight / viewUi->height));
+            }
+        }
+
         view->updateVisibility();
     }
 

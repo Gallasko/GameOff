@@ -73,7 +73,11 @@ void initGame()
 
     Character p2{"Player 2", CharacterType::Player, 100};
     p2.speed = 145;
-    p2.spells.push_back(Spell{"Heal", 20});
+
+    Spell heal{"Self Heal", 20};
+    heal.selfOnly = true;
+
+    p2.spells.push_back(heal);
     p2.spells.push_back(Spell{"Taunt", 20});
 
     Character p3{"Player 3", CharacterType::Player, 100};

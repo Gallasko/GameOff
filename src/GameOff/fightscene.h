@@ -128,6 +128,11 @@ namespace pg
         Character* chara;
     };
 
+    struct EnemyNextTurn
+    {
+        Character* chara;
+    };
+
     struct FightSystem : public System<Listener<FightSceneUpdate>, Listener<SpellCasted>, StoragePolicy>
     {
         virtual void onEvent(const SpellCasted& event) override;
@@ -155,6 +160,8 @@ namespace pg
 
         virtual void startUp() override;
 
+        void writeInLog(const std::string& message);
+
         FightSystem *fightSys;
 
         std::unordered_map<std::string, std::vector<EntityRef>> uiElements;
@@ -162,6 +169,8 @@ namespace pg
         Spell currentCastedSpell;
 
         CompRef<ListView> spellView;
+
+        CompRef<ListView> logView;
 
         EntityRef currentSelectedSpellTextUi;
 

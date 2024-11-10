@@ -68,6 +68,9 @@ namespace pg
         /** Spacing between each entity of the list */
         float spacing = 5;
 
+        /** Flag indicating whether the list must show the last item in the list when adding a new entity */
+        bool stickToBottom = false;
+
         std::vector<CompRef<UiComponent>> entities;
 
         _unique_id id;

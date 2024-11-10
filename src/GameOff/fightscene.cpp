@@ -58,6 +58,10 @@ namespace pg
         {
             ecsRef->sendEvent(PlayerNextTurn{chara});
         }
+        else if (chara->type == CharacterType::Enemy)
+        {
+            ecsRef->sendEvent(EnemyNextTurn{chara});
+        }
     }
 
     void FightSystem::addCharacter(Character character)
@@ -187,9 +191,15 @@ namespace pg
             
         }
 
-        auto listView = makeListView(ecsRef, 100, 250, 300, 300);
+        auto listView = makeListView(ecsRef, 100, 250, 300, 120);
 
         spellView = listView.get<ListView>();
+
+        auto listView2 = makeListView(ecsRef, 620, 120, 300, 400);
+
+        logView = listView2.get<ListView>();
+
+        logView->stickToBottom = true;
 
         listenToEvent<OnMouseClick>([this](const OnMouseClick& event) {
             if (event.button == SDL_BUTTON_RIGHT)
@@ -227,16 +237,28 @@ namespace pg
             }
         });
 
+        listenToEvent<EnemyNextTurn>([this](const EnemyNextTurn& event) {
+            LOG_INFO("Fight Scene", "Current enemy turn: " << event.chara->name);
+
+            writeInLog("Starting turn of " + event.chara->name);
+        });
+
         listenToEvent<PlayerNextTurn>([this](const PlayerNextTurn& event) {
             LOG_INFO("Fight Scene", "Current player turn: " << event.chara->name);
 
-            if (event.chara->type != CharacterType::Player)
+            writeInLog("Starting turn of " + event.chara->name);
+
+            if (event.chara->type == CharacterType::Player)
             {
                 inPlayableTurn = true;
             }
-   
-            inPlayableTurn = true;
+            else if (event.chara->type != CharacterType::Player)
+            {
+                return;
+            }
 
+            inTargetSelection = false;
+   
             currentPlayerTurn = event.chara->id;
 
             spellView->clear();
@@ -293,6 +315,7 @@ namespace pg
 
                 if (selectedTarget.size() >= currentCastedSpell.nbTargets)
                 {
+                    inPlayableTurn = false;
                     ecsRef->sendEvent(SpellCasted{selectedTarget, &currentCastedSpell});
                 }
             }
@@ -302,5 +325,16 @@ namespace pg
     void FightScene::startUp()
     {
         ecsRef->sendEvent(FightSceneUpdate{});
+    }
+
+    void FightScene::writeInLog(const std::string& message)
+    {
+        auto playerTurnText = makeTTFText(this, 0, 0, "res/font/Inter/static/Inter_28pt-Light.ttf", message, 0.4);
+
+        auto ui = playerTurnText.get<UiComponent>();
+
+        ui->setVisibility(false);
+
+        logView->addEntity(ui);
     }
 }
