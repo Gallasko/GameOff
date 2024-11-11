@@ -100,6 +100,20 @@ namespace pg
 
         std::vector<Spell> spells = {};
 
+
+        // In combat charac
+
+        /** Map containing the aggro of all the character relative to this one.
+         * Key: id of the character
+         * Value: Value of the aggro of the said character
+         * 
+         * Aggro increase with all the damage dealt
+         * Base aggro = character.physicalAttack + character.magicalAttack
+         * 
+         * Todo make sure that this map is ordered with the higher aggro first and the worst aggro last
+        */
+        std::map<size_t, float> aggroMap = {};
+
         size_t id = 0;
     };
 
@@ -124,7 +138,7 @@ namespace pg
 
     struct FightSystemUpdate {};
 
-    struct FightSceneUpdate {};
+    struct StartFight {};
 
     struct PlayerNextTurn
     {
@@ -138,7 +152,8 @@ namespace pg
 
     enum class FightAnimationEffects : uint8_t
     {
-        Hit = 0,
+        Nothing = 0, // Used only to advance the state machine (when no spell is casted or the enemy couldn't target anyone !)
+        Hit,
         Heal,
         StatusAilement,
         Counter,
@@ -156,24 +171,32 @@ namespace pg
 
     struct PlayFightAnimationDone {};
 
-    struct FightSystem : public System<Listener<FightSceneUpdate>, Listener<SpellCasted>, Listener<PlayFightAnimationDone>, Listener<EnemyNextTurn>>
+    struct FightSystem : public System<Listener<StartFight>, Listener<SpellCasted>, Listener<PlayFightAnimationDone>, Listener<EnemyNextTurn>>
     {
+        virtual void onEvent(const StartFight& event) override;
         virtual void onEvent(const EnemyNextTurn& event) override;
         virtual void onEvent(const PlayFightAnimationDone& event) override;
-        virtual void onEvent(const FightSceneUpdate& event) override;
         virtual void onEvent(const SpellCasted& event) override;
 
         virtual void execute() override;
 
         void resolveSpell(size_t casterId, size_t receiverId, Spell* spell);
 
+        void processEnemyNextTurn(Character *chara);
+
         void addCharacter(Character character);
 
-        Character* calculateNextPlayingCharacter();
+        void calculateNextPlayingCharacter();
+
+        void sendNextTurn(Character* character);
 
         Character* findNextPlayingCharacter();
 
+        Character* currentPlayingCharacter = nullptr;
+
         std::vector<Character> characters;
+
+        bool needToProcessEnemyNextTurn = false;
 
         bool spellToBeResolved = false;
         SpellCasted spellToResolve; 

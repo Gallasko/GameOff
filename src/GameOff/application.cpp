@@ -98,9 +98,20 @@ void initGame()
     fightSys->addCharacter(p3);
     fightSys->addCharacter(p4);
 
-    fightSys->addCharacter(Character{"Enemy 1", CharacterType::Enemy, 100});
-    fightSys->addCharacter(Character{"Boss 1",  CharacterType::Enemy, 100});
-    fightSys->addCharacter(Character{"Enemy 2", CharacterType::Enemy, 100});
+    Spell basicAttack{"Multishot", 10};
+
+    Character e1{"Enemy 1", CharacterType::Enemy, 100};
+    e1.spells.push_back(basicAttack);
+
+    Character e2{"Boss 1",  CharacterType::Enemy, 100};
+    e2.spells.push_back(basicAttack);
+
+    Character e3{"Enemy 2", CharacterType::Enemy, 100};
+    e3.spells.push_back(basicAttack);
+
+    fightSys->addCharacter(e1);
+    fightSys->addCharacter(e2);
+    fightSys->addCharacter(e3);
 
     // mainWindow->ecs.succeed<InspectorSystem, ListViewSystem>();
     mainWindow->ecs.succeed<MasterRenderer, TTFTextSystem>();

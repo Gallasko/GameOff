@@ -27,37 +27,32 @@ namespace pg
         constexpr float SPEEDUNITTHRESHOLD = 999;
     }
 
+    void FightSystem::onEvent(const StartFight&)
+    {
+        for (auto& character : characters)
+        {
+            for (const auto& chara : characters)
+            {
+                if (character.id != chara.id)
+                {
+                    character.aggroMap[chara.id] = chara.physicalAttack + chara.magicalAttack;
+                }
+            }
+        }
+
+        calculateNextPlayingCharacter();
+    }
+
     void FightSystem::onEvent(const EnemyNextTurn& event)
     {
-        
+        needToProcessEnemyNextTurn = true;
+
+        currentPlayingCharacter = event.chara;
     }
 
     void FightSystem::onEvent(const PlayFightAnimationDone&)
     {
-        auto chara = calculateNextPlayingCharacter();
-
-        if (chara->type == CharacterType::Player)
-        {
-            ecsRef->sendEvent(PlayerNextTurn{chara});
-        }
-        else if (chara->type == CharacterType::Enemy)
-        {
-            ecsRef->sendEvent(EnemyNextTurn{chara});
-        }
-    }
-
-    void FightSystem::onEvent(const FightSceneUpdate&)
-    {
-        auto chara = calculateNextPlayingCharacter();
-
-        if (chara->type == CharacterType::Player)
-        {
-            ecsRef->sendEvent(PlayerNextTurn{chara});
-        }
-        else if (chara->type == CharacterType::Enemy)
-        {
-            ecsRef->sendEvent(EnemyNextTurn{chara});
-        }
+        calculateNextPlayingCharacter();
     }
 
     void FightSystem::onEvent(const SpellCasted& event)
@@ -69,6 +64,15 @@ namespace pg
 
     void FightSystem::execute()
     {
+        if (needToProcessEnemyNextTurn)
+        {
+            processEnemyNextTurn(currentPlayingCharacter);
+
+            ecsRef->sendEvent(FightSystemUpdate{});
+
+            return;
+        }
+
         if (not spellToBeResolved)
             return;
 
@@ -92,9 +96,55 @@ namespace pg
 
         // Todo this is the heart of the fighting system
 
-        receiver.health -= spell->baseDmg;
+        float spellDamage = spell->baseDmg; 
+
+        receiver.health -= spellDamage;
+
+        // Give more aggro to player who deal damage to the character
+        receiver.aggroMap[casterId] += spellDamage;
 
         ecsRef->sendEvent(PlayFightAnimation{receiverId, FightAnimationEffects::Hit});
+    }
+
+    void FightSystem::processEnemyNextTurn(Character *chara)
+    {
+        // Todo here need to resolve spell and enemy AI
+
+        if (chara->spells.size() == 0)
+        {
+            LOG_ERROR("Fight Scene", "Character: " << chara->name << ", cannot cast any spell !");
+
+            ecsRef->sendEvent(PlayFightAnimation{0, FightAnimationEffects::Nothing});
+            
+            return;
+        }
+
+        auto& spell = chara->spells[0];
+
+        float currentTarget = 0;
+
+        for (auto& aggro : chara->aggroMap)
+        {
+            auto& other = characters[aggro.first];
+
+            if (other.type == CharacterType::Player)
+            {
+                resolveSpell(chara->id, aggro.first, &spell);
+
+                ++currentTarget;
+            }
+
+            if (spell.nbTargets >= currentTarget)
+            {
+                break;
+            }
+        }
+
+        // If the mob couldn't hit anyone we need to at least send one PlayFightAnimation to update the state machine
+        if (currentTarget == 0)
+            ecsRef->sendEvent(PlayFightAnimation{0, FightAnimationEffects::Nothing});
+
+        needToProcessEnemyNextTurn = false;
     }
 
     void FightSystem::addCharacter(Character character)
@@ -104,15 +154,14 @@ namespace pg
         characters.push_back(character);
     }
 
-    Character* FightSystem::calculateNextPlayingCharacter()
+    void FightSystem::calculateNextPlayingCharacter()
     {
         Character *nextPlayingCharacter = findNextPlayingCharacter();
 
         if (nextPlayingCharacter)
         {
-            nextPlayingCharacter->speedUnits -= SPEEDUNITTHRESHOLD + 1;
-            LOG_INFO("Fight System", "Next playing character: " << nextPlayingCharacter->name);
-            return nextPlayingCharacter;
+            sendNextTurn(nextPlayingCharacter);
+            return;
         }
 
         while (true)
@@ -126,10 +175,24 @@ namespace pg
 
             if (nextPlayingCharacter)
             {
-                nextPlayingCharacter->speedUnits -= SPEEDUNITTHRESHOLD + 1;
-                LOG_INFO("Fight System", "Next playing character: " << nextPlayingCharacter->name);
-                return nextPlayingCharacter;
+                sendNextTurn(nextPlayingCharacter);
+                return;
             }
+        }
+    }
+
+    void FightSystem::sendNextTurn(Character* character)
+    {
+        character->speedUnits -= SPEEDUNITTHRESHOLD + 1;
+        LOG_INFO("Fight System", "Next playing character: " << character->name);
+
+        if (character->type == CharacterType::Player)
+        {
+            ecsRef->sendEvent(PlayerNextTurn{character});
+        }
+        else if (character->type == CharacterType::Enemy)
+        {
+            ecsRef->sendEvent(EnemyNextTurn{character});
         }
     }
 
@@ -237,7 +300,7 @@ namespace pg
         listenToEvent<OnMouseClick>([this](const OnMouseClick& event) {
             if (event.button == SDL_BUTTON_RIGHT)
             {
-                ecsRef->sendEvent(FightSceneUpdate{});
+                ecsRef->sendEvent(PlayFightAnimationDone{});
             }
         });
 
@@ -361,7 +424,7 @@ namespace pg
 
     void FightScene::startUp()
     {
-        ecsRef->sendEvent(FightSceneUpdate{});
+        ecsRef->sendEvent(StartFight{});
     }
 
     void FightScene::execute()
