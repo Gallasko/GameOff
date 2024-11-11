@@ -202,6 +202,13 @@ namespace pg
         SpellCasted spellToResolve; 
     };
 
+    struct FightMessageEvent
+    {
+        FightMessageEvent(const std::string& message) : message(message) {}
+
+        std::string message;
+    };
+
     struct CharacterLeftClicked
     {
         CharacterLeftClicked(size_t id) : id(id) {}

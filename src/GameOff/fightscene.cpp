@@ -103,6 +103,10 @@ namespace pg
         // Give more aggro to player who deal damage to the character
         receiver.aggroMap[casterId] += spellDamage;
 
+        std::string message = caster.name + " dealt " + std::to_string(static_cast<int>(spellDamage)) + " to " + receiver.name;
+
+        ecsRef->sendEvent(FightMessageEvent{message});
+
         ecsRef->sendEvent(PlayFightAnimation{receiverId, FightAnimationEffects::Hit});
     }
 
@@ -419,6 +423,10 @@ namespace pg
 
         listenToEvent<PlayFightAnimation>([this](const PlayFightAnimation& event) {
             animationToDo.push_back(event);
+        });
+
+        listenToEvent<FightMessageEvent>([this](const FightMessageEvent& event) {
+            writeInLog(event.message);
         });
     }
 
