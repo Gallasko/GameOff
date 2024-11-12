@@ -80,7 +80,7 @@ namespace pg
         std::string name = "Passive"; 
         
         // -1 means permanent, once it reach 0, the passive is removed
-        size_t remainingTurns = -1;
+        int32_t remainingTurns = -1;
 
         // 0 means that it is active everytime the trigger is triggered, any other value means that it need multiple triggers before activation
         size_t numberOfTriggerBeforeActivation = 0;
@@ -121,7 +121,7 @@ namespace pg
      * 
      * @return Passive A Passive that gives the "value" amount to a given character
      */
-    Passive makeSimplePlayerBoostPassive(PlayerBoostType type, float value, size_t duration = -1, std::string name = "PlayerBoost");
+    Passive makeSimplePlayerBoostPassive(PlayerBoostType type, float value, int32_t duration = -1, std::string name = "PlayerBoost");
 
     enum class CharacterType : uint8_t
     {
@@ -162,6 +162,11 @@ namespace pg
 
         std::vector<Spell> spells = {};
 
+        // Todo create addSpell also
+
+        std::vector<Passive> passives = {};
+
+        void addPassive(const Passive& passive);
 
         // In combat charac
 
@@ -253,6 +258,8 @@ namespace pg
         void calculateNextPlayingCharacter();
 
         void sendNextTurn(Character* character);
+
+        void tickDownPassives(Character* character);
 
         Character* findNextPlayingCharacter();
 

@@ -74,7 +74,7 @@ namespace pg
         }
     }
 
-    Passive makeSimplePlayerBoostPassive(PlayerBoostType type, float value, size_t duration, std::string name)
+    Passive makeSimplePlayerBoostPassive(PlayerBoostType type, float value, int32_t duration, std::string name)
     {
         Passive passive;
 
@@ -83,12 +83,25 @@ namespace pg
         passive.trigger = TriggerType::StatBoost;
 
         passive.name = name;
-        passive.remainingTurns = duration;
+        
+        // Careful need to do + 1 to duration if it is > -1 here as the duration of the buff start ticking down at the start of the player turn !
+        // (until the start of the next turn -> set duration == 0, until the end of the next turn -> set duration == 1)
+        passive.remainingTurns = duration == -1 ? -1 : duration + 1;
 
         passive.applyOnCharacter = [type, value](Character& character) { addStatOnCharacter(character, type, value); };
         passive.removeFromCharacter = [type, value](Character& character) { addStatOnCharacter(character, type, -value); };
 
         return passive;
+    }
+
+    void Character::addPassive(const Passive& passive)
+    {
+        if (passive.type == PassiveType::CharacterEffect and passive.trigger == TriggerType::StatBoost)
+        {
+            passive.applyOnCharacter(*this);
+        }
+
+        passives.push_back(passive);
     }
 
     void FightSystem::onEvent(const StartFight&)
@@ -271,6 +284,8 @@ namespace pg
         character->speedUnits -= SPEEDUNITTHRESHOLD + 1;
         LOG_INFO("Fight System", "Next playing character: " << character->name);
 
+        tickDownPassives(character);
+
         if (character->type == CharacterType::Player)
         {
             ecsRef->sendEvent(PlayerNextTurn{character});
@@ -278,6 +293,46 @@ namespace pg
         else if (character->type == CharacterType::Enemy)
         {
             ecsRef->sendEvent(EnemyNextTurn{character});
+        }
+    }
+
+    void FightSystem::tickDownPassives(Character* character)
+    {
+        bool passiveWasRemoved = false;
+
+        // Iterate through all the character passives to tick down their turn count
+        for (int i = character->passives.size() - 1; i >= 0; --i)
+        {
+            auto& passive = character->passives[i];
+
+            // If the passive is not infinite (remainingTurn == -1) tick down a turn from it
+            if (passive.remainingTurns != -1)
+            {
+                --passive.remainingTurns;
+
+                // After ticking it down if it reaches 0 delete it
+                if (passive.remainingTurns <= 0)
+                {
+                    // In case of a character boost we need to undo the boost first before deleting it
+                    if (passive.type == PassiveType::CharacterEffect and passive.trigger == TriggerType::StatBoost)
+                    {
+                        passive.removeFromCharacter(*character);
+                    }
+
+                    std::string message = character->name + " is no longer under: " + passive.name;
+
+                    ecsRef->sendEvent(FightMessageEvent{message});
+
+                    character->passives.erase(character->passives.begin() + i);
+
+                    passiveWasRemoved = true;
+                }
+            }
+        }
+
+        if (passiveWasRemoved)
+        {
+            ecsRef->sendEvent(FightSystemUpdate{});
         }
     }
 

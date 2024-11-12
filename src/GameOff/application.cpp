@@ -85,6 +85,9 @@ void initGame()
     p3.speed = 105;
     p3.spells.push_back(Spell{"Stab", 20});
 
+    auto healthBoost = makeSimplePlayerBoostPassive(PlayerBoostType::Health, 50, 3);
+    p3.addPassive(healthBoost);
+
     Character p4{"Player 4", CharacterType::Player, 100};
     p4.speed = 100;
     
