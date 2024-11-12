@@ -8,6 +8,9 @@
 
 namespace pg
 {
+    // Type definitions
+    struct Character;
+
     // ElementLess (Neutral) = 0, Water, Earth, Air, Fire, Light, Dark
     inline constexpr size_t NbElements = 7;
 
@@ -34,6 +37,10 @@ namespace pg
 
         float baseDmg = 1;
 
+        float baseManaCost = 0;
+
+        size_t baseCooldown = 1;
+
         Element elementType = Element::ElementLess;
         DamageType damageType = DamageType::Physical;
 
@@ -42,35 +49,90 @@ namespace pg
         size_t nbTargets = 1;
 
         bool canTargetSameCharacterMultipleTimes = false;
+
+        // In combat charac
+        
+        size_t numberOfTurnsSinceLastUsed = 0;
     };
 
     enum class TriggerType : uint8_t
     {
         TurnStart = 0,
         TurnEnd,
-        AnyTurnStart,
-        AnyTurnEnd,
         OnHit,
         OnDamageDealt,
         StatBoost
     };
 
-    struct Passiv
+    enum class PassiveType : uint8_t
     {
+        CharacterEffect = 0,
+        SpellEffect,
+        TurnEffect,
+    };
+
+    struct Passive
+    {
+        PassiveType type;
+
         TriggerType trigger;
+
+        std::string name = "Passive"; 
         
-        // -1 means permanent, once it reach 0, the passiv is removed
+        // -1 means permanent, once it reach 0, the passive is removed
         size_t remainingTurns = -1;
 
         // 0 means that it is active everytime the trigger is triggered, any other value means that it need multiple triggers before activation
         size_t numberOfTriggerBeforeActivation = 0;
         size_t currentNbOfTriggerSinceLastActivation = 0;
+
+        /** Flag indicating if this passive is hidden from view of the player */
+        bool hidden = false;
+
+        /** Keep track of the number of time this passive was activated */
+        size_t nbSuccesfulActivation = 0;
+
+        // Function to use and define when passiveType == CharacterEffect and trigger == StatBoost
+        std::function<void(Character&)> applyOnCharacter;
+        std::function<void(Character&)> removeFromCharacter;
     };
+
+    enum class PlayerBoostType : uint8_t
+    {
+        Health = 0,
+        PAtk,
+        MAtk,
+        PDef,
+        MDef,
+        Speed,
+        CChance,
+        CDamage,
+        Evasion,
+        Res
+    };
+
+    /**
+     * @brief Factory function creating simple Player boost passive
+     * 
+     * @param type Type of player boost to apply
+     * @param value Value of player boost to apply
+     * @param duration Number of turn that the boost last (-1 to go infinite)
+     * @param name Name of the boost
+     * 
+     * @return Passive A Passive that gives the "value" amount to a given character
+     */
+    Passive makeSimplePlayerBoostPassive(PlayerBoostType type, float value, size_t duration = -1, std::string name = "PlayerBoost");
 
     enum class CharacterType : uint8_t
     {
         Player = 0,
         Enemy
+    };
+
+    enum class PlayingStatus : uint8_t
+    {
+        Alive = 0,
+        Dead
     };
 
     struct Character
@@ -114,6 +176,8 @@ namespace pg
         */
         std::map<size_t, float> aggroMap = {};
 
+        PlayingStatus playingStatus = PlayingStatus::Alive;
+
         size_t id = 0;
     };
 
@@ -131,9 +195,9 @@ namespace pg
 
     struct SelectedSpell
     {
-        SelectedSpell(const Spell& spell) : spell(spell) {}
+        SelectedSpell(Spell *spell) : spell(spell) {}
 
-        Spell spell;  
+        Spell *spell;  
     };
 
     struct FightSystemUpdate {};
@@ -224,13 +288,15 @@ namespace pg
 
         virtual void execute() override;
 
+        void castSpell();
+
         void writeInLog(const std::string& message);
 
         FightSystem *fightSys;
 
         std::unordered_map<std::string, std::vector<EntityRef>> uiElements;
 
-        Spell currentCastedSpell;
+        Spell *currentCastedSpell = nullptr;
 
         CompRef<ListView> spellView;
 

@@ -79,6 +79,7 @@ void initGame()
 
     p2.spells.push_back(heal);
     p2.spells.push_back(Spell{"Taunt", 20});
+    p2.spells.push_back(Spell{"Big ball", 80, 0, 3});
 
     Character p3{"Player 3", CharacterType::Player, 100};
     p3.speed = 105;

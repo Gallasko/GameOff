@@ -27,6 +27,70 @@ namespace pg
         constexpr float SPEEDUNITTHRESHOLD = 999;
     }
 
+    void addStatOnCharacter(Character& chara, PlayerBoostType type, float value)
+    {
+        switch (type)
+        {
+            case PlayerBoostType::Health:
+                chara.health += value;
+                break;
+
+            case PlayerBoostType::PAtk:
+                chara.physicalAttack += value;
+                break;
+
+            case PlayerBoostType::MAtk:
+                chara.magicalAttack += value;
+                break;
+
+            case PlayerBoostType::PDef:
+                chara.physicalDefense += value;
+                break;
+
+            case PlayerBoostType::MDef:
+                chara.physicalAttack += value;
+                break;
+
+            case PlayerBoostType::Speed:
+                chara.speed += value;
+                break;
+
+            case PlayerBoostType::CChance:
+                chara.critChance += value;
+                break;
+
+            case PlayerBoostType::CDamage:
+                chara.critDamage += value;
+                break;
+
+            case PlayerBoostType::Evasion:
+                chara.evasionRate += value;
+                break;
+
+            case PlayerBoostType::Res:
+                // chara.elementalRes += value;
+                break;
+
+        }
+    }
+
+    Passive makeSimplePlayerBoostPassive(PlayerBoostType type, float value, size_t duration, std::string name)
+    {
+        Passive passive;
+
+        passive.type = PassiveType::CharacterEffect;
+
+        passive.trigger = TriggerType::StatBoost;
+
+        passive.name = name;
+        passive.remainingTurns = duration;
+
+        passive.applyOnCharacter = [type, value](Character& character) { addStatOnCharacter(character, type, value); };
+        passive.removeFromCharacter = [type, value](Character& character) { addStatOnCharacter(character, type, -value); };
+
+        return passive;
+    }
+
     void FightSystem::onEvent(const StartFight&)
     {
         for (auto& character : characters)
@@ -107,6 +171,16 @@ namespace pg
 
         ecsRef->sendEvent(FightMessageEvent{message});
 
+        if (receiver.health <= 0.5f)
+        {
+            receiver.speedUnits = 0;
+            receiver.playingStatus = PlayingStatus::Dead;
+
+            message = receiver.name + " died !";
+
+            ecsRef->sendEvent(FightMessageEvent{message});
+        }
+
         ecsRef->sendEvent(PlayFightAnimation{receiverId, FightAnimationEffects::Hit});
     }
 
@@ -155,6 +229,12 @@ namespace pg
     {
         character.id = characters.size();
 
+        // Set up the base states of the spell at startup
+        for (auto& spell : character.spells)
+        {
+            spell.numberOfTurnsSinceLastUsed = spell.baseCooldown;
+        }
+
         characters.push_back(character);
     }
 
@@ -172,7 +252,8 @@ namespace pg
         {
             for (auto& chara : characters)
             {
-                chara.speedUnits += chara.speed;
+                if (chara.playingStatus != PlayingStatus::Dead)
+                    chara.speedUnits += chara.speed;
             }
 
             nextPlayingCharacter = findNextPlayingCharacter();
@@ -226,6 +307,8 @@ namespace pg
             return nullptr;
     }
 
+    struct SpellDoneClicked {};
+
     void FightScene::init()
     {
         fightSys = ecsRef->getSystem<FightSystem>();
@@ -237,6 +320,8 @@ namespace pg
         auto doneUit = makeTTFText(this, 600, 150, "res/font/Inter/static/Inter_28pt-Light.ttf", "Done", 0.6, {255.0f, 0.0f, 0.0f, 255.0f});
 
         doneUit.get<UiComponent>()->setVisibility(false);
+
+        attach<MouseLeftClickComponent>(doneUit.entity, makeCallable<SpellDoneClicked>());
 
         doneUi = doneUit.entity;
 
@@ -365,10 +450,23 @@ namespace pg
 
             for (auto& spell : event.chara->spells)
             {
+                if (spell.numberOfTurnsSinceLastUsed < spell.baseCooldown)
+                {
+                    ++spell.numberOfTurnsSinceLastUsed;
+                }
+
                 LOG_INFO("Fight Scene", "Spell: " << spell.name);
                 auto sp = makeTTFText(this, 0, 0, "res/font/Inter/static/Inter_28pt-Light.ttf", spell.name, 0.4);
 
-                attach<MouseLeftClickComponent>(sp.entity, makeCallable<SelectedSpell>(spell));
+                // The spell can be cast
+                if (spell.numberOfTurnsSinceLastUsed >= spell.baseCooldown)
+                {
+                    attach<MouseLeftClickComponent>(sp.entity, makeCallable<SelectedSpell>(&spell));
+                }
+                else
+                {
+                    sp.get<TTFText>()->colors = {255.0f, 0.0f, 0.0f, 255.0f};
+                }
 
                 auto ui = sp.get<UiComponent>();
 
@@ -381,7 +479,7 @@ namespace pg
         listenToEvent<SelectedSpell>([this](const SelectedSpell& event) {
             currentCastedSpell = event.spell;
 
-            currentSelectedSpellTextUi.get<TTFText>()->setText(event.spell.name);
+            currentSelectedSpellTextUi.get<TTFText>()->setText(event.spell->name);
 
             selectedTarget.clear();
 
@@ -394,13 +492,13 @@ namespace pg
 
             if (inTargetSelection)
             {
-                if (currentCastedSpell.selfOnly and event.id != currentPlayerTurn)
+                if (currentCastedSpell->selfOnly and event.id != currentPlayerTurn)
                 {
                     LOG_INFO("Fight Scene", "Cannot target someone else with a self only spell");
                     return;
                 }
 
-                if (not currentCastedSpell.canTargetSameCharacterMultipleTimes)
+                if (not currentCastedSpell->canTargetSameCharacterMultipleTimes)
                 {
                     const auto& it = std::find(selectedTarget.begin(), selectedTarget.end(), event.id);
 
@@ -413,10 +511,13 @@ namespace pg
 
                 selectedTarget.push_back(event.id);
 
-                if (selectedTarget.size() >= currentCastedSpell.nbTargets)
+                if (selectedTarget.size() >= currentCastedSpell->nbTargets)
                 {
-                    inPlayableTurn = false;
-                    ecsRef->sendEvent(SpellCasted{currentPlayerTurn, selectedTarget, &currentCastedSpell});
+                    castSpell();
+                }
+                else
+                {
+                    doneUi.get<UiComponent>()->setVisibility(true);
                 }
             }
         });
@@ -427,6 +528,13 @@ namespace pg
 
         listenToEvent<FightMessageEvent>([this](const FightMessageEvent& event) {
             writeInLog(event.message);
+        });
+
+        listenToEvent<SpellDoneClicked>([this](const SpellDoneClicked&) {
+            if (not inPlayableTurn)
+                return;
+
+            castSpell();
         });
     }
 
@@ -448,6 +556,16 @@ namespace pg
         animationToDo.clear();
 
         ecsRef->sendEvent(PlayFightAnimationDone{});
+    }
+
+    void FightScene::castSpell()
+    {
+        currentCastedSpell->numberOfTurnsSinceLastUsed = 0;
+
+        doneUi.get<UiComponent>()->setVisibility(false);
+
+        inPlayableTurn = false;
+        ecsRef->sendEvent(SpellCasted{currentPlayerTurn, selectedTarget, currentCastedSpell});
     }
 
     void FightScene::writeInLog(const std::string& message)
