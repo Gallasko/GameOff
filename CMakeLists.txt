@@ -223,6 +223,8 @@ else()
     target_sources(GameOff PRIVATE
         src/GameOff/application.cpp
         src/GameOff/fightscene.cpp
+        src/GameOff/character.cpp
+        src/GameOff/characustomizationscene.cpp
     )
     
     target_link_libraries(GameOff PRIVATE PgEngineSrc)
