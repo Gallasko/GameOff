@@ -12,11 +12,11 @@ namespace pg
     struct SpellCasted
     {
         SpellCasted() {}
-        SpellCasted(size_t caster, std::vector<size_t> ids, Spell *spell) : caster(caster), ids(ids), spell(spell) {}
+        SpellCasted(size_t caster, std::vector<Character*> ids, Spell *spell) : caster(caster), ids(ids), spell(spell) {}
 
         size_t caster = 0;
 
-        std::vector<size_t> ids = {0};
+        std::vector<Character*> ids = {nullptr};
         
         Spell *spell = nullptr;
     };
@@ -136,7 +136,7 @@ namespace pg
 
         bool inTargetSelection = false;
 
-        std::vector<size_t> selectedTarget;
+        std::vector<Character*> selectedTarget;
 
         std::vector<PlayFightAnimation> animationToDo;
     };

@@ -80,8 +80,8 @@ namespace pg
 
         for (auto id : spellToResolve.ids)
         {
-            LOG_INFO("Fight System", "-> " << characters[id].name);
-            resolveSpell(spellToResolve.caster, id, spellToResolve.spell);
+            LOG_INFO("Fight System", "-> " << id->name);
+            resolveSpell(spellToResolve.caster, id->id, spellToResolve.spell);
         }
 
         spellToBeResolved = false;
@@ -317,13 +317,13 @@ namespace pg
 
         for (size_t i = 0; i < fightSys->characters.size(); ++i)
         {
-            auto& character =  fightSys->characters[i];
+            auto& character = fightSys->characters[i];
 
             if (character.type == CharacterType::Enemy)
             {
                 auto enemyText = makeTTFText(this, xEnemyName, 20, "res/font/Inter/static/Inter_28pt-Light.ttf", character.name, 0.4);
 
-                attach<MouseLeftClickComponent>(enemyText.entity, makeCallable<CharacterLeftClicked>(character.id));
+                attach<MouseLeftClickComponent>(enemyText.entity, makeCallable<CharacterLeftClicked>(&character));
 
                 enemyNames.push_back(enemyText.entity);
 
@@ -339,7 +339,7 @@ namespace pg
             {
                 auto playerText = makeTTFText(this, xPlayerName, 120, "res/font/Inter/static/Inter_28pt-Light.ttf", character.name, 0.4);
 
-                attach<MouseLeftClickComponent>(playerText.entity, makeCallable<CharacterLeftClicked>(character.id));
+                attach<MouseLeftClickComponent>(playerText.entity, makeCallable<CharacterLeftClicked>(&character));
 
                 playerNames.push_back(playerText.entity);
 
@@ -470,7 +470,11 @@ namespace pg
 
             if (inTargetSelection)
             {
-                if (currentCastedSpell->selfOnly and event.id != currentPlayerTurn)
+                auto character = event.chara;
+
+                const auto& id = character->id;
+
+                if (currentCastedSpell->selfOnly and id != currentPlayerTurn)
                 {
                     LOG_INFO("Fight Scene", "Cannot target someone else with a self only spell");
                     return;
@@ -478,7 +482,7 @@ namespace pg
 
                 if (not currentCastedSpell->canTargetSameCharacterMultipleTimes)
                 {
-                    const auto& it = std::find(selectedTarget.begin(), selectedTarget.end(), event.id);
+                    const auto& it = std::find_if(selectedTarget.begin(), selectedTarget.end(), [id](Character* chara) { return chara->id == id; });
 
                     if (it != selectedTarget.end())
                     {
@@ -487,7 +491,7 @@ namespace pg
                     }
                 }
 
-                selectedTarget.push_back(event.id);
+                selectedTarget.push_back(character);
 
                 if (selectedTarget.size() >= currentCastedSpell->nbTargets)
                 {

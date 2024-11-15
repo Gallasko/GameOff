@@ -186,9 +186,9 @@ namespace pg
 
     struct CharacterLeftClicked
     {
-        CharacterLeftClicked(size_t id) : id(id) {}
+        CharacterLeftClicked(Character *chara) : chara(chara) {}
 
-        size_t id;
+        Character *chara;
     };
 
 }
