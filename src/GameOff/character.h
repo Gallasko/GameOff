@@ -184,4 +184,11 @@ namespace pg
         size_t id = 0;
     };
 
+    struct CharacterLeftClicked
+    {
+        CharacterLeftClicked(size_t id) : id(id) {}
+
+        size_t id;
+    };
+
 }

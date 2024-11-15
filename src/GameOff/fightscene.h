@@ -103,12 +103,6 @@ namespace pg
         std::string message;
     };
 
-    struct CharacterLeftClicked
-    {
-        CharacterLeftClicked(size_t id) : id(id) {}
-
-        size_t id;
-    };
 
     struct FightScene : public Scene
     {

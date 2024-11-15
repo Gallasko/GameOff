@@ -10,6 +10,7 @@
 #include "UI/ttftext.h"
 
 #include "fightscene.h"
+#include "characustomizationscene.h"
 
 using namespace pg;
 
@@ -120,11 +121,15 @@ void initGame()
     // mainWindow->ecs.succeed<InspectorSystem, ListViewSystem>();
     mainWindow->ecs.succeed<MasterRenderer, TTFTextSystem>();
 
+
+    mainWindow->ecs.createSystem<PlayerHandlingSystem>();
+
     mainWindow->ecs.start();
 
     mainWindow->render();
 
-    mainWindow->ecs.getSystem<SceneElementSystem>()->loadSystemScene<FightScene>();
+    // mainWindow->ecs.getSystem<SceneElementSystem>()->loadSystemScene<FightScene>();
+    mainWindow->ecs.getSystem<SceneElementSystem>()->loadSystemScene<PlayerCustomizationScene>();
 
     mainWindow->resize(820, 640);
 
