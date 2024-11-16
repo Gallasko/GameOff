@@ -35,7 +35,7 @@ namespace pg
             {
                 if (character.id != chara.id)
                 {
-                    character.aggroMap[chara.id] = chara.physicalAttack + chara.magicalAttack;
+                    character.aggroMap[chara.id] = chara.stat.physicalAttack + chara.stat.magicalAttack;
                 }
             }
         }
@@ -98,7 +98,7 @@ namespace pg
 
         float spellDamage = spell->baseDmg; 
 
-        receiver.health -= spellDamage;
+        receiver.stat.health -= spellDamage;
 
         // Give more aggro to player who deal damage to the character
         receiver.aggroMap[casterId] += spellDamage;
@@ -107,7 +107,7 @@ namespace pg
 
         ecsRef->sendEvent(FightMessageEvent{message});
 
-        if (receiver.health <= 0.5f)
+        if (receiver.stat.health <= 0.5f)
         {
             receiver.speedUnits = 0;
             receiver.playingStatus = PlayingStatus::Dead;
@@ -189,7 +189,7 @@ namespace pg
             for (auto& chara : characters)
             {
                 if (chara.playingStatus != PlayingStatus::Dead)
-                    chara.speedUnits += chara.speed;
+                    chara.speedUnits += chara.stat.speed;
             }
 
             nextPlayingCharacter = findNextPlayingCharacter();
@@ -327,7 +327,7 @@ namespace pg
 
                 enemyNames.push_back(enemyText.entity);
 
-                auto enemyHealth = makeTTFText(this, xEnemyName, 50, "res/font/Inter/static/Inter_28pt-Light.ttf", std::to_string(static_cast<int>(character.health)), 0.4);
+                auto enemyHealth = makeTTFText(this, xEnemyName, 50, "res/font/Inter/static/Inter_28pt-Light.ttf", std::to_string(character.stat.health), 0.4);
 
                 enemyHealths.push_back(enemyHealth.entity);
 
@@ -343,7 +343,7 @@ namespace pg
 
                 playerNames.push_back(playerText.entity);
 
-                auto playerHealth = makeTTFText(this, xPlayerName, 170, "res/font/Inter/static/Inter_28pt-Light.ttf", std::to_string(static_cast<int>(character.health)), 0.4);
+                auto playerHealth = makeTTFText(this, xPlayerName, 170, "res/font/Inter/static/Inter_28pt-Light.ttf", std::to_string(character.stat.health), 0.4);
 
                 playerHealths.push_back(playerHealth.entity);
 
@@ -383,7 +383,7 @@ namespace pg
 
                 if (chara.type == CharacterType::Enemy)
                 {
-                    enemyHealths[j].get<TTFText>()->setText(std::to_string(static_cast<int>(chara.health)));
+                    enemyHealths[j].get<TTFText>()->setText(std::to_string(chara.stat.health));
 
                     LOG_INFO("Fight Scene", "Health: " << enemyHealths[j].get<TTFText>()->text);
 
@@ -391,7 +391,7 @@ namespace pg
                 }
                 else if (chara.type == CharacterType::Player)
                 {
-                    playerHealths[k].get<TTFText>()->setText(std::to_string(static_cast<int>(chara.health)));
+                    playerHealths[k].get<TTFText>()->setText(std::to_string(chara.stat.health));
 
                     LOG_INFO("Fight Scene", "Health: " << playerHealths[k].get<TTFText>()->text);
 

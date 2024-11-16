@@ -7,39 +7,39 @@ namespace pg
         switch (type)
         {
             case PlayerBoostType::Health:
-                chara.health += value;
+                chara.stat.health += value;
                 break;
 
             case PlayerBoostType::PAtk:
-                chara.physicalAttack += value;
+                chara.stat.physicalAttack += value;
                 break;
 
             case PlayerBoostType::MAtk:
-                chara.magicalAttack += value;
+                chara.stat.magicalAttack += value;
                 break;
 
             case PlayerBoostType::PDef:
-                chara.physicalDefense += value;
+                chara.stat.physicalDefense += value;
                 break;
 
             case PlayerBoostType::MDef:
-                chara.physicalAttack += value;
+                chara.stat.physicalAttack += value;
                 break;
 
             case PlayerBoostType::Speed:
-                chara.speed += value;
+                chara.stat.speed += value;
                 break;
 
             case PlayerBoostType::CChance:
-                chara.critChance += value;
+                chara.stat.critChance += value;
                 break;
 
             case PlayerBoostType::CDamage:
-                chara.critDamage += value;
+                chara.stat.critDamage += value;
                 break;
 
             case PlayerBoostType::Evasion:
-                chara.evasionRate += value;
+                chara.stat.evasionRate += value;
                 break;
 
             case PlayerBoostType::Res:

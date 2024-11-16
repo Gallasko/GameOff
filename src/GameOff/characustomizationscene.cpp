@@ -53,7 +53,11 @@ namespace pg
 
             LOG_INFO("CharacterLeftClicked", "Current player id: " << currentPlayer->id);
 
+            characterName.get<TTFText>()->setText(currentPlayer->name);
+
             characterName.get<UiComponent>()->setVisibility(true);
+
+            showStat();
         });
 
         listenToStandardEvent("CharaNameChange", [this](const StandardEvent& event) {
@@ -79,6 +83,8 @@ namespace pg
         charaName.get<UiComponent>()->setVisibility(false);
         
         charaName.get<TextInputComponent>()->clearTextAfterEnter = false;
+
+        makeStatUi();
     }
 
     void PlayerCustomizationScene::execute()
@@ -107,8 +113,45 @@ namespace pg
         }
     }
 
+    void PlayerCustomizationScene::makeStatUi()
+    {
+        std::vector<std::string> statToDisplay = {"HP", "ATK", "MATK", "DEF", "MDEF", "SPEED", "CC", "CD", "EVA"};
+
+        float baseX = 400;
+        float baseY = 75;
+
+        for (std::string stat : statToDisplay)
+        {
+            auto ttf = makeTTFText(this, baseX, baseY, "res/font/Inter/static/Inter_28pt-Light.ttf", stat, 0.4);
+            auto ttfUi = ttf.get<UiComponent>();
+            ttfUi->setVisibility(false);
+
+            auto ttfNb = makeTTFText(this, baseX + 125, baseY, "res/font/Inter/static/Inter_28pt-Light.ttf", "0", 0.4);
+            auto ttfUi2 = ttfNb.get<UiComponent>();
+            ttfUi2->setVisibility(false);
+
+            characterStatUi[stat] = ttf.entity;
+            characterStatUi[stat + "nb"] = ttfNb.entity;
+
+            baseY += 35;
+        }
+    }
+
     void PlayerCustomizationScene::showStat()
     {
+        characterStatUi["HPnb"].get<TTFText>()->setText(std::to_string(currentPlayer->stat.health));
+        characterStatUi["ATKnb"].get<TTFText>()->setText(std::to_string(currentPlayer->stat.physicalAttack));
+        characterStatUi["DEFnb"].get<TTFText>()->setText(std::to_string(currentPlayer->stat.physicalDefense));
+        characterStatUi["MATKnb"].get<TTFText>()->setText(std::to_string(currentPlayer->stat.magicalAttack));
+        characterStatUi["MDEFnb"].get<TTFText>()->setText(std::to_string(currentPlayer->stat.magicalDefense));
+        characterStatUi["SPEEDnb"].get<TTFText>()->setText(std::to_string(currentPlayer->stat.speed));
+        characterStatUi["CCnb"].get<TTFText>()->setText(std::to_string(currentPlayer->stat.critChance));
+        characterStatUi["CDnb"].get<TTFText>()->setText(std::to_string(currentPlayer->stat.critDamage));
+        characterStatUi["EVAnb"].get<TTFText>()->setText(std::to_string(currentPlayer->stat.evasionRate));
 
+        for (auto entity : characterStatUi)
+        {
+            entity.second.get<UiComponent>()->setVisibility(true);
+        }
     }
 }

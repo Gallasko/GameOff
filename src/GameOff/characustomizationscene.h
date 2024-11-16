@@ -38,6 +38,7 @@ namespace pg
 
         void updateCharacterList();
 
+        void makeStatUi();
         void showStat();
 
         bool newCharacterCreated = false;
@@ -54,5 +55,7 @@ namespace pg
         std::unordered_map<_unique_id, Character*> ttfTextIdToCharacter;
 
         EntityRef characterName;
+
+        std::unordered_map<std::string, EntityRef> characterStatUi;
     };
 }

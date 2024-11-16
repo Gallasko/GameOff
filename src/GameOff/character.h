@@ -133,28 +133,33 @@ namespace pg
         Dead
     };
 
+    struct CharacterStat
+    {
+        int health = 100;
+
+        int physicalAttack = 10;
+        int magicalAttack = 10;
+
+        int physicalDefense = 1;
+        int magicalDefense = 1;
+
+        int speed = 100;
+
+        // In percentage
+        int critChance = 5;
+        int critDamage = 150;
+        int evasionRate = 1;
+
+        int elementalRes[NbElements] = {0};
+    };
+
     struct Character
     {
         std::string name = "Unknown";
 
         CharacterType type = CharacterType::Player;
 
-        float health = 100;
-
-        float physicalAttack = 10;
-        float magicalAttack = 10;
-
-        float physicalDefense = 1;
-        float magicalDefense = 1;
-
-        float speed = 100;
-
-        // In percentage
-        float critChance = 5;
-        float critDamage = 150;
-        float evasionRate = 1;
-
-        float elementalRes[NbElements] = {0.0f};
+        CharacterStat stat;
 
         float speedUnits = 0;
 
