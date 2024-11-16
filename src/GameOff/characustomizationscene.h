@@ -17,19 +17,42 @@ namespace pg
         virtual void onCreation(EntityRef entity) override;
     };
 
-    struct NewPlayerCreated { PlayerCharacter *character; };
+    struct NewPlayerCreated { EntityRef entity; };
 
     struct PlayerHandlingSystem : public System<Own<PlayerCharacter>, StoragePolicy>
     {
         size_t lastGivenId = 0;
     };
 
+    enum class CurrentCharacterTab : uint8_t
+    {
+        Stat = 0,
+        Equipment,
+        Job,
+    };
+
     struct PlayerCustomizationScene : public Scene
     {
         virtual void init() override;
+        virtual void execute() override;
+
+        void updateCharacterList();
+
+        void showStat();
+
+        bool newCharacterCreated = false;
+        EntityRef newlyCreatedCharacter;
 
         CompRef<ListView> characterList;
 
-        std::vector<size_t> characterListPosToId;
+        Character *currentPlayer;
+
+        bool menuShown = false;
+
+        CurrentCharacterTab tab = CurrentCharacterTab::Stat;
+
+        std::unordered_map<_unique_id, Character*> ttfTextIdToCharacter;
+
+        EntityRef characterName;
     };
 }
