@@ -38,4 +38,9 @@ namespace pg
 
         LevelIncrease levelGains[MAXLEVEL];
     };
+
+    struct NoneSkillTree : public SkillTree 
+    {
+        NoneSkillTree() { name = "None"; }
+    };
 }

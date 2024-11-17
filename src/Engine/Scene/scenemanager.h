@@ -95,6 +95,8 @@ namespace pg
 
         EntityRef createEntity();
 
+        inline Entity* getEntity(_unique_id id) const { return ecsRef->getEntity(id); }
+
         template <typename Type, typename... Args>
         CompRef<Type> attach(EntityRef entity, Args&&... args) noexcept
         {

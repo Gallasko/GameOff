@@ -15,9 +15,9 @@ namespace pg
     {
         Character character;
 
-        std::vector<SkillTree> learnedSkillTree;
+        std::vector<SkillTree> learnedSkillTree = { NoneSkillTree{} };
 
-        std::vector<SkillTree*> skillTreeInUse;
+        std::vector<SkillTree*> skillTreeInUse = { nullptr, nullptr, nullptr };
 
         // Todo add equipment
 
@@ -48,6 +48,9 @@ namespace pg
         void makeStatUi();
         void showStat();
 
+        void makeSkillTreeUi();
+        void showSkillTree();
+
         bool newCharacterCreated = false;
         EntityRef newlyCreatedCharacter;
 
@@ -64,5 +67,6 @@ namespace pg
         EntityRef characterName;
 
         std::unordered_map<std::string, EntityRef> characterStatUi;
+        std::unordered_map<std::string, EntityRef> skillTreeUi;
     };
 }

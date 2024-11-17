@@ -54,6 +54,7 @@ namespace pg
             LOG_INFO("CharacterLeftClicked", "Current player id: " << currentPlayer->id);
 
             characterName.get<TTFText>()->setText(currentPlayer->name);
+            characterName.get<TextInputComponent>()->text = currentPlayer->name;
 
             characterName.get<UiComponent>()->setVisibility(true);
 
@@ -72,7 +73,7 @@ namespace pg
             updateCharacterList();
         });
 
-        auto listView = makeListView(ecsRef, 100, 250, 300, 120);
+        auto listView = makeListView(this, 0, 150, 300, 120);
 
         characterList = listView.get<ListView>();
 
@@ -109,7 +110,6 @@ namespace pg
                 auto chara = ttfTextIdToCharacter.at(character.entityId);
                 entity->get<TTFText>()->setText(chara->name);
             }
-                
         }
     }
 
@@ -153,5 +153,24 @@ namespace pg
         {
             entity.second.get<UiComponent>()->setVisibility(true);
         }
+    }
+
+    void PlayerCustomizationScene::makeSkillTreeUi()
+    {
+        float baseX = 400;
+        float baseY = 450;
+
+        for (size_t i = 0; i < 3; i++)
+        {
+            auto ttf = makeTTFText(this, baseX, baseY, "res/font/Inter/static/Inter_28pt-Light.ttf", "None", 0.4);
+            auto ttfUi = ttf.get<UiComponent>();
+            ttfUi->setVisibility(false);
+
+            skillTreeUi["skill" + std::to_string(i)] = ttf.entity;
+
+            baseX += 90;
+        }
+
+
     }
 }

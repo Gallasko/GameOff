@@ -354,11 +354,11 @@ namespace pg
             
         }
 
-        auto listView = makeListView(ecsRef, 100, 250, 300, 120);
+        auto listView = makeListView(this, 100, 250, 300, 120);
 
         spellView = listView.get<ListView>();
 
-        auto listView2 = makeListView(ecsRef, 620, 120, 300, 400);
+        auto listView2 = makeListView(this, 620, 120, 300, 400);
 
         logView = listView2.get<ListView>();
 

@@ -56,6 +56,8 @@ void initGame()
 
     printf("Engine initialized ...\n");
 
+    mainWindow->ecs.createSystem<FpsSystem>();
+
     mainWindow->ecs.createSystem<MoveToSystem>();
     // mainWindow->ecs.createSystem<ContextMenu>();
     // mainWindow->ecs.createSystem<InspectorSystem>();

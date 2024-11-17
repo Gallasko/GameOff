@@ -4,6 +4,31 @@
 
 #include "uisystem.h"
 
+#include "2D/texture.h"
+
+#include "focusable.h"
+
+#include "Systems/oneventcomponent.h"
+
+#include "Input/inputcomponent.h"
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#include <SDL2/SDL.h>
+#include <SDL_opengles2.h>
+// #include <SDL_opengl_glext.h>
+// #include <GLES2/gl2.h>
+// #include <GLFW/glfw3.h>
+#else
+    #ifdef __linux__
+    #include <SDL2/SDL.h>
+    #include <SDL2/SDL_opengl.h>
+    #elif _WIN32
+    #include <SDL.h>
+    #include <SDL_opengl.h>
+    #endif
+#endif
+
 namespace pg
 {
     struct ClearListViewEvent
@@ -147,6 +172,95 @@ namespace pg
     };
 
     /** Helper that create an entity with an Ui component and a Texture component */
-    CompList<UiComponent, ListView> makeListView(EntitySystem *ecs, float x, float y, float width, float height);
+    template <typename Type>
+    CompList<UiComponent, ListView> makeListView(Type *ecs, float x, float y, float width, float height)
+    {
+        auto entity = ecs->createEntity();
+
+        auto ui = ecs->template attach<UiComponent>(entity);
+
+        auto view = ecs->template attach<ListView>(entity);
+
+        // make2
+
+        ui->setX(x);
+        ui->setY(y);
+
+        ui->setWidth(width);
+        ui->setHeight(height);
+
+        view->viewUi = ui;
+
+        // Z + 3 so the cursor is always on top of the slider
+        auto cursor = makeUiTexture(ecs, 15, 40, "cursor");
+        cursor.template get<UiComponent>()->setZ(ui->pos.z + 3);
+        cursor.template get<UiComponent>()->setHeight(view->cursorHeight);
+        cursor.template get<UiComponent>()->setTopAnchor(ui->top);
+        cursor.template get<UiComponent>()->setRightAnchor(ui->right);
+
+        ecs->template attach<FocusableComponent>(cursor.entity);
+
+        auto viewId = view.entityId;
+
+        auto cursorId = cursor.entity.id;
+
+        // Todo improve this
+        std::function<void(const OnMouseMove&)> cursorCallback = [viewId, ecs](const OnMouseMove event) {
+            if (not event.inputHandler->isButtonPressed(SDL_BUTTON_LEFT))
+                return;
+
+            auto ent = ecs->getEntity(viewId);
+
+            if (not ent)
+                return;
+
+            auto viewComp = ent->template get<ListView>();
+            auto viewUi = ent->template get<UiComponent>();
+
+            auto focus = viewComp->cursor->template get<FocusableComponent>();
+            auto cursorUi = viewComp->cursor->template get<UiComponent>();
+
+            if (not focus->focused)
+                return;
+
+            float cHeight = viewComp->cursorHeight;
+
+            float currentPos = event.pos.y - viewUi->pos.y - cHeight / 2.0f;
+
+            if (currentPos < 0)
+                currentPos = 0;
+
+            float maxHeight = viewUi->height - cursorUi->height;
+
+            if (currentPos > maxHeight)
+                currentPos = maxHeight;
+
+            cursorUi->setTopMargin(currentPos);
+
+            if (viewComp->entities.size() > 0)
+            {
+                // * static_cast<float>(viewComp->listReelHeight / viewComp->viewUi->height)
+                viewComp->entities[0]->setTopMargin(-currentPos * static_cast<float>(viewComp->listReelHeight / viewComp->viewUi->height));
+            }
+
+            viewComp->updateVisibility();
+        };
+
+        ecs->template attach<OnEventComponent>(cursor.entity, cursorCallback);
+
+        ecs->template attach<MouseLeftClickComponent>(cursor.entity, makeCallable<OnFocus>(cursorId), MouseStateTrigger::OnPress);
+
+        // Z + 2 so the slider is always on top of any entity in the list
+        auto slider = makeUiTexture(ecs, 15, 1, "slider");
+        slider.template get<UiComponent>()->setZ(ui->pos.z + 2);
+        slider.template get<UiComponent>()->setTopAnchor(ui->top);
+        slider.template get<UiComponent>()->setBottomAnchor(ui->bottom);
+        slider.template get<UiComponent>()->setRightAnchor(ui->right);
+
+        view->cursor = cursor.entity;
+        view->slider = slider.entity;
+
+        return CompList<UiComponent, ListView>(entity, ui, view);
+    }
 
 }
