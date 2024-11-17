@@ -7,12 +7,19 @@
 #include "UI/listview.h"
 
 #include "character.h"
+#include "skilltree.h"
 
 namespace pg
 {
     struct PlayerCharacter : public Ctor
     {
         Character character;
+
+        std::vector<SkillTree> learnedSkillTree;
+
+        std::vector<SkillTree*> skillTreeInUse;
+
+        // Todo add equipment
 
         virtual void onCreation(EntityRef entity) override;
     };

@@ -2,23 +2,26 @@
 
 #include <string>
 
+#include "characterstats.h"
+#include "spells.h"
+#include "passives.h"
+
 namespace pg
 {
     constexpr static size_t MAXLEVEL = 100;
 
     struct LevelProgression
     {
-
-    };
-
-    struct StatIncrease
-    {
-
+        size_t neededXp[MAXLEVEL] = {0};
     };
 
     struct LevelIncrease
     {
-        StatIncrease stats;
+        CharacterStat stats;
+
+        std::vector<Spell> learntSpells;
+
+        std::vector<Passive> learntPassive;
     };
 
     struct SkillTree
