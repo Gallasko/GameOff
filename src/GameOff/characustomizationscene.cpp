@@ -59,6 +59,7 @@ namespace pg
             characterName.get<UiComponent>()->setVisibility(true);
 
             showStat();
+            showSkillTree();
         });
 
         listenToStandardEvent("CharaNameChange", [this](const StandardEvent& event) {
@@ -86,6 +87,7 @@ namespace pg
         charaName.get<TextInputComponent>()->clearTextAfterEnter = false;
 
         makeStatUi();
+        makeSkillTreeUi();
     }
 
     void PlayerCustomizationScene::execute()
@@ -171,6 +173,24 @@ namespace pg
             baseX += 90;
         }
 
+        auto listView = makeListView(this, 400, 500, 200, 120);
+        listView.get<ListView>()->setVisibility(false);
 
+        skillTreeUi["treeList"] = listView.entity;
+
+        auto ttf = makeTTFText(this, 0, 0, "res/font/Inter/static/Inter_28pt-Light.ttf", "None", 0.4);
+        listView.get<ListView>()->addEntity(ttf.get<UiComponent>());
+    }
+
+    void PlayerCustomizationScene::showSkillTree()
+    {
+        for (size_t i = 0; i < 3; i++)
+        {
+            auto ui = skillTreeUi["skill" + std::to_string(i)];
+
+            ui.get<UiComponent>()->setVisibility(true);
+        }
+
+        skillTreeUi["treeList"].get<ListView>()->setVisibility(true);
     }
 }

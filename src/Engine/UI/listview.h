@@ -77,6 +77,8 @@ namespace pg
 
         void updateVisibility();
 
+        void setVisibility(bool visible);
+
         void clear() { ecsRef->sendEvent(ClearListViewEvent{id}); }
 
         CompRef<UiComponent> viewUi;
@@ -84,11 +86,14 @@ namespace pg
         // Todo currently only supports vertical list view
         // Todo make it work for horizontal or both hori/verti slider (2 sliders at the same time)
         EntityRef cursor;
+        CompRef<UiComponent> cursorUi;
+
         UiSize cursorHeight;
 
         UiSize listReelHeight;
 
         EntityRef slider;
+        CompRef<UiComponent> sliderUi;
 
         /** Spacing between each entity of the list */
         float spacing = 5;
@@ -258,7 +263,10 @@ namespace pg
         slider.template get<UiComponent>()->setRightAnchor(ui->right);
 
         view->cursor = cursor.entity;
+        view->cursorUi = cursor.template get<UiComponent>();
+
         view->slider = slider.entity;
+        view->sliderUi = slider.template get<UiComponent>();
 
         return CompList<UiComponent, ListView>(entity, ui, view);
     }

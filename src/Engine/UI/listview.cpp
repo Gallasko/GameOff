@@ -16,6 +16,8 @@ namespace pg
 
     void ListView::updateVisibility()
     {
+        auto visible = viewUi->isVisible();
+
         for (auto& ui : entities)
         {
             float childTop    = ui->top;
@@ -25,13 +27,22 @@ namespace pg
 
             ui->visible = false;
 
-            if (viewUi->inBound(childLeft, childTop) or viewUi->inBound(childLeft, childBottom) or viewUi->inBound(childRight, childTop) or viewUi->inBound(childRight, childBottom))
+            if (visible and (viewUi->inBound(childLeft, childTop) or viewUi->inBound(childLeft, childBottom) or viewUi->inBound(childRight, childTop) or viewUi->inBound(childRight, childBottom)))
             {
                 ui->visible = true;
             }
 
             ui->update();
         }
+    }
+
+    void ListView::setVisibility(bool visible)
+    {
+        viewUi->setVisibility(visible);
+        cursorUi->setVisibility(visible);
+        sliderUi->setVisibility(visible);
+
+        updateVisibility();
     }
 
     void ListViewSystem::init()
