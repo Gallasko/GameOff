@@ -11,15 +11,21 @@
 
 namespace pg
 {
+    constexpr size_t MAXSKILLTREEINUSE = 3;
+
     struct PlayerCharacter : public Ctor
     {
         Character character;
 
         std::vector<SkillTree> learnedSkillTree = { NoneSkillTree{} };
 
-        std::vector<SkillTree*> skillTreeInUse = { nullptr, nullptr, nullptr };
+        SkillTree* skillTreeInUse[MAXSKILLTREEINUSE] = {nullptr};
 
         // Todo add equipment
+
+        void removeSkillTreeAt(size_t index);
+
+        void setSkillTreeInUse(SkillTree* sTree, size_t index);
 
         virtual void onCreation(EntityRef entity) override;
     };
@@ -50,13 +56,14 @@ namespace pg
 
         void makeSkillTreeUi();
         void showSkillTree();
+        void showSkillTreeReplacement(size_t skillTreeSelected);
 
         bool newCharacterCreated = false;
         EntityRef newlyCreatedCharacter;
 
         CompRef<ListView> characterList;
 
-        Character *currentPlayer;
+        PlayerCharacter *currentPlayer;
 
         bool menuShown = false;
 

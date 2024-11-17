@@ -48,6 +48,12 @@ namespace pg
         // Function to use and define when passiveType == CharacterEffect and trigger == StatBoost
         std::function<void(Character&)> applyOnCharacter;
         std::function<void(Character&)> removeFromCharacter;
+
+        // Todo upgrade this to be more precise
+        bool operator==(const Passive& other)
+        {
+            return name == other.name;
+        }
     };
 
     enum class PlayerBoostType : uint8_t

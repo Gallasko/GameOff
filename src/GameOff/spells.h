@@ -28,5 +28,11 @@ namespace pg
         // In combat charac
         
         size_t numberOfTurnsSinceLastUsed = 0;
+
+        // Todo upgrade this to be more precise
+        bool operator==(const Spell& other)
+        {
+            return name == other.name;
+        }
     };
 }

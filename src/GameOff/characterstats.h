@@ -22,6 +22,46 @@ namespace pg
         int evasionRate = 0;
 
         int elementalRes[NbElements] = {0};
+
+        CharacterStat& operator+=(const CharacterStat& other)
+        {
+            health += other.health;
+            physicalAttack += other.physicalAttack;
+            magicalAttack += other.magicalAttack;
+            physicalDefense += other.physicalDefense;
+            magicalDefense += other.magicalDefense;
+            speed += other.speed;
+            critChance += other.critChance;
+            critDamage += other.critDamage;
+            evasionRate += other.evasionRate;
+
+            for (size_t i = 0; i < NbElements; i++)
+            {
+                elementalRes[i] += other.elementalRes[i];
+            }
+
+            return *this;
+        }
+
+        CharacterStat& operator-=(const CharacterStat& other)
+        {
+            health -= other.health;
+            physicalAttack -= other.physicalAttack;
+            magicalAttack -= other.magicalAttack;
+            physicalDefense -= other.physicalDefense;
+            magicalDefense -= other.magicalDefense;
+            speed -= other.speed;
+            critChance -= other.critChance;
+            critDamage -= other.critDamage;
+            evasionRate -= other.evasionRate;
+
+            for (size_t i = 0; i < NbElements; i++)
+            {
+                elementalRes[i] -= elementalRes[i];
+            }
+
+            return *this;
+        }
     };
 
     struct BaseCharacterStat : public CharacterStat
