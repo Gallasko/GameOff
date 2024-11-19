@@ -13,7 +13,7 @@ namespace pg
         if (not skillTree)
             return;
 
-        for (size_t i = 0; i < skillTree->currentLevel; ++i)
+        for (size_t i = 0; i < skillTree->currentLevel + 1; ++i)
         {
             character.stat -= skillTree->levelGains[i].stats;
 
@@ -43,7 +43,26 @@ namespace pg
         // Then replace the skill tree by the new one
         skillTreeInUse[index] = sTree;
 
-        // Todo Finally apply all the statbuff / new spell / new passive to the character
+        // Finally apply all the statbuff / new spell / new passive to the character
+        applySkillTree(sTree);
+    }
+
+    void PlayerCharacter::applySkillTree(SkillTree* sTree)
+    {
+        for (size_t i = 0; i < sTree->currentLevel + 1; ++i)
+        {
+            character.stat += sTree->levelGains[i].stats;
+
+            for (auto& spell : sTree->levelGains[i].learntSpells)
+            {
+                character.spells.push_back(spell);
+            }
+
+            for (auto& passive : sTree->levelGains[i].learntPassive)
+            {
+                character.passives.push_back(passive);
+            }
+        }
     }
 
     void PlayerCharacter::onCreation(EntityRef entity)
@@ -315,6 +334,7 @@ namespace pg
             currentPlayer->setSkillTreeInUse(event.sTree, event.skillTreeSelected);
 
             showSkillTree();
+            showStat();
 
             skillTreeUi["treeList"].get<ListView>()->setVisibility(false);
         });

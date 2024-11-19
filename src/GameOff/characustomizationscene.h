@@ -8,6 +8,7 @@
 
 #include "character.h"
 #include "skilltree.h"
+#include "customskilltree.h"
 
 namespace pg
 {
@@ -17,7 +18,7 @@ namespace pg
     {
         Character character;
 
-        std::vector<SkillTree> learnedSkillTree = { NoneSkillTree{} };
+        std::vector<SkillTree> learnedSkillTree = { NoneSkillTree{}, WarriorTree{}, MageTree{} };
 
         SkillTree* skillTreeInUse[MAXSKILLTREEINUSE] = {nullptr};
 
@@ -26,6 +27,8 @@ namespace pg
         void removeSkillTreeAt(size_t index);
 
         void setSkillTreeInUse(SkillTree* sTree, size_t index);
+
+        void applySkillTree(SkillTree* sTree);
 
         virtual void onCreation(EntityRef entity) override;
     };
@@ -58,6 +61,9 @@ namespace pg
         void showSkillTree();
         void showSkillTreeReplacement(size_t skillTreeSelected);
 
+        void makeSpellUi();
+        void showSpell();
+
         bool newCharacterCreated = false;
         EntityRef newlyCreatedCharacter;
 
@@ -75,5 +81,6 @@ namespace pg
 
         std::unordered_map<std::string, EntityRef> characterStatUi;
         std::unordered_map<std::string, EntityRef> skillTreeUi;
+        std::unordered_map<std::string, EntityRef> SpellsUi;
     };
 }

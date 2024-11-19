@@ -12,7 +12,7 @@ namespace pg
 
     struct LevelProgression
     {
-        size_t neededXp[MAXLEVEL] = {0};
+        size_t neededXp[MAXLEVEL + 1] = {0};
     };
 
     struct LevelIncrease
@@ -36,7 +36,7 @@ namespace pg
 
         LevelProgression requiredXpForNextLevel;
 
-        LevelIncrease levelGains[MAXLEVEL];
+        LevelIncrease levelGains[MAXLEVEL + 1];
     };
 
     struct NoneSkillTree : public SkillTree 
