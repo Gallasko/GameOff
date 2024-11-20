@@ -103,7 +103,6 @@ namespace pg
         std::string message;
     };
 
-
     struct FightScene : public Scene
     {
         virtual void init() override;

@@ -11,6 +11,7 @@
 
 #include "fightscene.h"
 #include "characustomizationscene.h"
+#include "inventory.h"
 
 using namespace pg;
 
@@ -57,6 +58,8 @@ void initGame()
     printf("Engine initialized ...\n");
 
     mainWindow->ecs.createSystem<FpsSystem>();
+
+    mainWindow->ecs.createSystem<InventorySystem>();
 
     mainWindow->ecs.createSystem<MoveToSystem>();
     // mainWindow->ecs.createSystem<ContextMenu>();
@@ -129,7 +132,8 @@ void initGame()
     mainWindow->render();
 
     // mainWindow->ecs.getSystem<SceneElementSystem>()->loadSystemScene<FightScene>();
-    mainWindow->ecs.getSystem<SceneElementSystem>()->loadSystemScene<PlayerCustomizationScene>();
+    // mainWindow->ecs.getSystem<SceneElementSystem>()->loadSystemScene<PlayerCustomizationScene>();
+    mainWindow->ecs.getSystem<SceneElementSystem>()->loadSystemScene<InventoryScene>();
 
     mainWindow->resize(820, 640);
 

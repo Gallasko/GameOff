@@ -2,6 +2,8 @@
 
 #include "ECS/system.h"
 
+#include "Scene/scenemanager.h"
+
 namespace pg
 {
     enum class ItemType : uint8_t
@@ -30,18 +32,18 @@ namespace pg
     struct Item
     {
         /** Name of the item */
-        std::string name;
+        std::string name = "None";
         
         /** Type of the item */
-        ItemType type;
+        ItemType type = ItemType::Key;
 
         /** Number of items in a stack */
         int stacksize = 1;
         /** Current number of items in this stack */
-        size_t nbItems;
+        size_t nbItems = 1;
 
         /** Rarity of the item */
-        ItemRarity rarity;
+        ItemRarity rarity = ItemRarity::Common;
 
         /**
          * Map of all the attributes of an item
@@ -51,7 +53,7 @@ namespace pg
          * StatsBoost (for weapons and armor) -> <"MATK", "5">
          * Spell -> "Spell1;Spell2;Spell3" (spellname string in csv format)
          */
-        std::unordered_map<std::string, ElementType> attributes;
+        std::unordered_map<std::string, ElementType> attributes = {};
         
         // Todo maybe add a pointer to a character (For weapons and armors)
 
@@ -60,7 +62,7 @@ namespace pg
 
         bool operator==(const Item& rhs) const
         {
-            return name == rhs.name and type == rhs.type and rarity == rhs.rarity and attributes == rhs.attributes;
+            return name == rhs.name and stacksize == rhs.stacksize and type == rhs.type and rarity == rhs.rarity and attributes == rhs.attributes;
         }
     };
 
@@ -89,5 +91,14 @@ namespace pg
         void onEvent(const LoseItem& event);
 
         std::unordered_map<ItemType, std::vector<Item>> items;
+    };
+
+    struct InventoryScene : public Scene
+    {
+        virtual void init() override;
+
+        void populateView(const ItemType& type);
+
+        std::unordered_map<std::string, EntityRef> inventoryUi;
     };
 }
