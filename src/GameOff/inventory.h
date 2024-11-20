@@ -57,6 +57,11 @@ namespace pg
 
         /** Description of the item */
         std::string description = "An item";
+
+        bool operator==(const Item& rhs) const
+        {
+            return name == rhs.name and type == rhs.type and rarity == rhs.rarity and attributes == rhs.attributes;
+        }
     };
 
     struct GainItem

@@ -1,5 +1,3 @@
-#pragma once
-
 #include "inventory.h"
 
 namespace pg
@@ -29,7 +27,7 @@ namespace pg
 
             if (remainingSize > 0)
             {
-                if (remainingSize > item.nbItems)
+                if (static_cast<size_t>(remainingSize) > item.nbItems)
                 {
                     it->nbItems += item.nbItems;
                     return; 
@@ -42,11 +40,17 @@ namespace pg
             }
         }
 
+        if (item.stacksize == -1)
+        {
+            items[item.type].push_back(item);
+            return;
+        }
+
         do
         {
             auto itemToPush = item;
 
-            if (item.nbItems >= item.stacksize)
+            if (item.nbItems >= static_cast<size_t>(item.stacksize))
             {
                 itemToPush.nbItems = item.stacksize;
             }
