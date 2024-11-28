@@ -30,6 +30,39 @@ GameApp::~GameApp()
     LOG_THIS_MEMBER(DOM);
 }
 
+enum class SceneName
+{
+    Customization,
+    Inventory
+};
+
+struct SceneToLoad
+{
+    SceneToLoad(const SceneName& name) : name(name) {}
+
+    SceneName name;
+};
+
+struct SceneLoader : public System<Listener<SceneToLoad>, StoragePolicy>
+{
+    virtual void onEvent(const SceneToLoad& event) override
+    {
+        switch (event.name)
+        {
+        case SceneName::Customization:
+            ecsRef->getSystem<SceneElementSystem>()->loadSystemScene<PlayerCustomizationScene>();
+            break;
+
+        case SceneName::Inventory:
+            ecsRef->getSystem<SceneElementSystem>()->loadSystemScene<InventoryScene>();
+            break;
+
+        default:
+            break;
+        }
+    }
+};
+
 std::thread *initThread;
 pg::Window *mainWindow = nullptr;
 std::atomic<bool> initialized = {false};
@@ -62,6 +95,8 @@ void initGame()
     mainWindow->ecs.createSystem<InventorySystem>();
 
     mainWindow->ecs.createSystem<MoveToSystem>();
+
+    mainWindow->ecs.createSystem<SceneLoader>();
     // mainWindow->ecs.createSystem<ContextMenu>();
     // mainWindow->ecs.createSystem<InspectorSystem>();
     auto ttfSys = mainWindow->ecs.createSystem<TTFTextSystem>(mainWindow->masterRenderer);
@@ -131,9 +166,21 @@ void initGame()
 
     mainWindow->render();
 
+
+    
+    // Navigation tabs
+    auto titleTTF = makeTTFText(&mainWindow->ecs, 50, 0, "res/font/Inter/static/Inter_28pt-Light.ttf", "Customization", 0.4);
+    mainWindow->ecs.attach<MouseLeftClickComponent>(titleTTF.entity, makeCallable<SceneToLoad>(SceneName::Customization));
+
+    auto titleTTF2 = makeTTFText(&mainWindow->ecs, 225, 0, "res/font/Inter/static/Inter_28pt-Light.ttf", "Inventory", 0.4);
+    mainWindow->ecs.attach<MouseLeftClickComponent>(titleTTF2.entity, makeCallable<SceneToLoad>(SceneName::Inventory));
+
+
+    
+
     // mainWindow->ecs.getSystem<SceneElementSystem>()->loadSystemScene<FightScene>();
     // mainWindow->ecs.getSystem<SceneElementSystem>()->loadSystemScene<PlayerCustomizationScene>();
-    mainWindow->ecs.getSystem<SceneElementSystem>()->loadSystemScene<InventoryScene>();
+    // mainWindow->ecs.getSystem<SceneElementSystem>()->loadSystemScene<InventoryScene>();
 
     mainWindow->resize(820, 640);
 

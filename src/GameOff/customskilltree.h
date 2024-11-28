@@ -47,7 +47,7 @@ namespace pg
         {
             name = "Mage";
 
-            currentLevel = 2;
+            currentLevel = 5;
 
             maxLevel = 10;
 
