@@ -12,7 +12,7 @@
                 "command": "powershell",
                 "args": [
                     "-c",
-                    "cmake --build ${workspaceFolder}/debug --config Debug --target PgEngine -j 8 --"
+                    "cmake --build ${workspaceFolder}/debug --config Debug --target GameOff -j 8 --"
                 ]
             },
             "linux": {

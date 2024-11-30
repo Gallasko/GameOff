@@ -99,16 +99,8 @@ namespace pg
 
         listenToEvent<NewPlayerCreated>([this](const NewPlayerCreated& event) {
             auto player = event.entity.get<PlayerCharacter>();
-            
-            auto ttf = makeTTFText(this, 0, 0, "res/font/Inter/static/Inter_28pt-Light.ttf", player->character.name, 0.4);
-            auto ttfUi = ttf.get<UiComponent>();
-            ttfUi->setVisibility(false);
 
-            attach<MouseLeftClickComponent>(ttf.entity, makeCallable<SelectedCharacter>(player.component));
-
-            characterList->addEntity(ttfUi);
-
-            ttfTextIdToCharacter.emplace(ttf.entity.id, &player->character);
+            addPlayerToListView(player.component);
         });
 
         listenToEvent<SelectedCharacter>([this](const SelectedCharacter& event) {
@@ -153,8 +145,34 @@ namespace pg
         makeSkillTreeUi();
     }
 
+    void PlayerCustomizationScene::startUp()
+    {
+        // for (auto player : ecsRef->view<PlayerCharacter>())
+        // {
+        //     if (player)
+        //     {
+        //         LOG_INFO("Player", "Got player: " << player->character.name);
+
+        //         addPlayerToListView(player);
+        //     }
+        // }
+    }
+
     void PlayerCustomizationScene::execute()
     {
+    }
+
+    void PlayerCustomizationScene::addPlayerToListView(PlayerCharacter* player)
+    {
+        auto ttf = makeTTFText(this, 0, 0, "res/font/Inter/static/Inter_28pt-Light.ttf", player->character.name, 0.4);
+        auto ttfUi = ttf.get<UiComponent>();
+        ttfUi->setVisibility(false);
+
+        attach<MouseLeftClickComponent>(ttf.entity, makeCallable<SelectedCharacter>(player));
+
+        characterList->addEntity(ttfUi);
+
+        ttfTextIdToCharacter.emplace(ttf.entity.id, &player->character);
     }
 
     void PlayerCustomizationScene::updateCharacterList()

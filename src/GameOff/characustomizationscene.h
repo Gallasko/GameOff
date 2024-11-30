@@ -50,7 +50,10 @@ namespace pg
     struct PlayerCustomizationScene : public Scene
     {
         virtual void init() override;
+        virtual void startUp() override;
         virtual void execute() override;
+
+        void addPlayerToListView(PlayerCharacter* player);
 
         void updateCharacterList();
 

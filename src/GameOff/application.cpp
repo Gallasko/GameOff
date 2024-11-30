@@ -43,7 +43,7 @@ struct SceneToLoad
     SceneName name;
 };
 
-struct SceneLoader : public System<Listener<SceneToLoad>, StoragePolicy>
+struct SceneLoader : public System<Listener<SceneToLoad>, StoragePolicy, InitSys>
 {
     virtual void onEvent(const SceneToLoad& event) override
     {
@@ -60,6 +60,17 @@ struct SceneLoader : public System<Listener<SceneToLoad>, StoragePolicy>
         default:
             break;
         }
+    }
+
+    virtual void init() override
+    {
+        // Navigation tabs
+        auto titleTTF = makeTTFText(ecsRef, 50, 0, "res/font/Inter/static/Inter_28pt-Light.ttf", "Customization", 0.4);
+        titleTTF.get<UiComponent>()->setZ(1);
+        ecsRef->attach<MouseLeftClickComponent>(titleTTF.entity, makeCallable<SceneToLoad>(SceneName::Customization));
+
+        auto titleTTF2 = makeTTFText(ecsRef, 225, 0, "res/font/Inter/static/Inter_28pt-Light.ttf", "Inventory", 0.4);
+        ecsRef->attach<MouseLeftClickComponent>(titleTTF2.entity, makeCallable<SceneToLoad>(SceneName::Inventory));
     }
 };
 
@@ -96,7 +107,6 @@ void initGame()
 
     mainWindow->ecs.createSystem<MoveToSystem>();
 
-    mainWindow->ecs.createSystem<SceneLoader>();
     // mainWindow->ecs.createSystem<ContextMenu>();
     // mainWindow->ecs.createSystem<InspectorSystem>();
     auto ttfSys = mainWindow->ecs.createSystem<TTFTextSystem>(mainWindow->masterRenderer);
@@ -104,6 +114,8 @@ void initGame()
     ttfSys->registerFont("res/font/Inter/static/Inter_28pt-Light.ttf");
     ttfSys->registerFont("res/font/Inter/static/Inter_28pt-Bold.ttf");
     ttfSys->registerFont("res/font/Inter/static/Inter_28pt-Italic.ttf");
+
+    mainWindow->masterRenderer->processTextureRegister();
 
     auto fightSys = mainWindow->ecs.createSystem<FightSystem>();
 
@@ -162,21 +174,12 @@ void initGame()
 
     mainWindow->ecs.createSystem<PlayerHandlingSystem>();
 
+    mainWindow->ecs.createSystem<SceneLoader>();
+
     mainWindow->ecs.start();
 
     mainWindow->render();
 
-
-    
-    // Navigation tabs
-    auto titleTTF = makeTTFText(&mainWindow->ecs, 50, 0, "res/font/Inter/static/Inter_28pt-Light.ttf", "Customization", 0.4);
-    mainWindow->ecs.attach<MouseLeftClickComponent>(titleTTF.entity, makeCallable<SceneToLoad>(SceneName::Customization));
-
-    auto titleTTF2 = makeTTFText(&mainWindow->ecs, 225, 0, "res/font/Inter/static/Inter_28pt-Light.ttf", "Inventory", 0.4);
-    mainWindow->ecs.attach<MouseLeftClickComponent>(titleTTF2.entity, makeCallable<SceneToLoad>(SceneName::Inventory));
-
-
-    
 
     // mainWindow->ecs.getSystem<SceneElementSystem>()->loadSystemScene<FightScene>();
     // mainWindow->ecs.getSystem<SceneElementSystem>()->loadSystemScene<PlayerCustomizationScene>();
