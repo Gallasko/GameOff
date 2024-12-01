@@ -90,9 +90,10 @@ namespace pg
         attach<MouseLeftClickComponent>(createNewPlayer.entity, makeCallable<CreateNewPlayerButtonPressed>());
 
         listenToEvent<CreateNewPlayerButtonPressed>([this](const CreateNewPlayerButtonPressed&) {
-            auto player = createEntity();
+            // Can't use the scene function here to create and attach as the entity needs to outlive the scene
+            auto player = ecsRef->createEntity();
 
-            attach<PlayerCharacter>(player);
+            ecsRef->attach<PlayerCharacter>(player);
 
             ecsRef->sendEvent(NewPlayerCreated{player});
         });
@@ -147,15 +148,19 @@ namespace pg
 
     void PlayerCustomizationScene::startUp()
     {
-        // for (auto player : ecsRef->view<PlayerCharacter>())
-        // {
-        //     if (player)
-        //     {
-        //         LOG_INFO("Player", "Got player: " << player->character.name);
+        LOG_INFO("Player", "Starting up");
 
-        //         addPlayerToListView(player);
-        //     }
-        // }
+        for (auto player : ecsRef->view<PlayerCharacter>())
+        {
+            LOG_INFO("Player", "Loading players");
+
+            if (player)
+            {
+                LOG_INFO("Player", "Got player: " << player->character.name);
+
+                addPlayerToListView(player);
+            }
+        }
     }
 
     void PlayerCustomizationScene::execute()
